@@ -1,0 +1,32 @@
+/*
+<NAME> 木の直径
+<TRIGGER>
+<TAG> graph, 木
+<*NOTE>
+木の直径を求める。
+
+やっていること
+
+1. 適当な頂点からDFSして各頂点までの距離を求める。
+2. 距離最大だった頂点から同じようにDFSを始めて距離を求める。
+3. スタートした頂点と距離最大だった頂点間が直径。
+
+<*CODE> */
+pair<int, pair<int, int>> diameter(vector<vector<int>> &T) {
+    int N = T.size();
+    auto dfs = [&T,&N](int st) -> pair<int, int> {
+        vector<int> dist(N, INF);
+        function<void(int,int,int)> rec=[&](int v,int p,int d) {
+            dist[v]=d;
+            for (auto &w: T[v])
+                if (p != w) rec(w, v, d + 1);
+        };
+        rec(st, -1, 0);
+        int v = 0;
+        for (int i = 0; i < N; i++) if (dist[v] < dist[i]) v = i;
+        return {dist[v], v};
+    };
+    pair<int, int> a = dfs(0);
+    pair<int, int> b = dfs(a.second);
+    return {b.first, {a.second, b.second}};
+}

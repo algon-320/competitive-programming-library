@@ -1,0 +1,8 @@
+/*
+<NAME> GCD / LCM
+<TRIGGER> gcdlcm
+<TAG> math
+<*NOTE>
+<*CODE> */
+int gcd(int a, int b) { return a ? gcd(b % a, a) : b; }
+int lcm(int a, int b) { return a / gcd(a, b) * b; }

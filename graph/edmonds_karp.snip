@@ -1,0 +1,78 @@
+/*
+<NAME> Edmonds-Karp 最大流
+<TRIGGER> EdmondsKarp
+<TAG> ネットワークフロー, 最大流, graph
+<*NOTE>
+
+- フォード・ファルカーソンのアルゴリズムの実装。
+- $O(VE^2)$
+	- 疎なグラフでは高速
+
+`add_edge`で辺を追加して、`max_flow`で最大流を得る。
+
+<*CODE> */
+template <typename T>
+struct EdmondsKarp {
+    struct Edge {
+        int from;
+        int to;
+        T cap;
+    };
+
+    int size;
+    vector<Edge> edge;
+    vector<vector<int>> graph;
+
+    EdmondsKarp(int size_) : size(size_) {
+        graph.resize(size);
+    }
+    void add_edge(int from, int to, T cap) {
+        graph[from].push_back(edge.size());
+        edge.push_back(Edge{from, to, cap});
+        graph[to].push_back(edge.size());
+        edge.push_back(Edge{to, from, 0});
+    }
+    T max_flow(int s, int t) {
+        auto get_reverse_edge = [](int e) {
+            if (e % 2) return e - 1;
+            else return e + 1;
+        };
+
+        T flow = 0;
+        while (1) {
+            queue<int> q;
+            q.push(s);
+            vector<int> from(size, -1);
+            from[s] = -2;
+            while (!q.empty()) {
+                int v = q.front(); q.pop();
+                if (v == t) break;
+                for (auto &e : graph[v]) {
+                    int w = edge[e].to;
+                    if (edge[e].cap <= 0 || from[w] != -1) continue;
+                    from[w] = e;
+                    q.push(w);
+                }
+            }
+            if (from[t] == -1) break;
+
+            int cur = t;
+            vector<int> arg_path;
+            T bottleneck = 0;
+            while (cur != s) {
+                int e = from[cur];
+                if (bottleneck == 0 || bottleneck > edge[e].cap) {
+                    bottleneck = edge[e].cap;
+                }
+                arg_path.push_back(e);
+                cur = edge[e].from;
+            }
+            for (auto &e : arg_path) {
+                edge[e].cap -= bottleneck;
+                edge[get_reverse_edge(e)].cap += bottleneck;
+            }
+            flow += bottleneck;
+        }
+        return flow;
+    }
+};

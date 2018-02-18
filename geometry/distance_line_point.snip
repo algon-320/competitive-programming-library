@@ -1,0 +1,25 @@
+/*
+<NAME> 点と線分の距離
+<TRIGGER>
+<TAG> geometry
+<*NOTE>
+点は`vector<int>`で扱う。
+<*CODE> */
+vector<int> cross_product(vector<int> a, vector<int> b) {
+    return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]};
+}
+double dot_product(vector<int> a, vector<int> b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+double len(vector<int> a) {
+    return sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
+}
+double dist_line_point(vector<int> a, vector<int> b, vector<int> c) {
+    vector<int> ab = {b[0] - a[0], b[1] - a[1], b[2] - a[2]};
+    vector<int> ac = {c[0] - a[0], c[1] - a[1], c[2] - a[2]};
+    vector<int> ba = {a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+    vector<int> bc = {c[0] - b[0], c[1] - b[1], c[2] - b[2]};
+    if(dot_product(ab, ac) < 0) return INF;
+    if(dot_product(ba, bc) < 0) return INF;
+    return len(cross_product(ab, ac)) / len(ab);
+}

@@ -1,0 +1,13 @@
+/*
+<NAME> 最長増加部分列 (Longest Increasing Subsequence)
+<TRIGGER> LIS
+<TAG> DP, etc
+<*NOTE>
+蟻本に載っている、二分探索を用いた$O(N log N)$の解法。
+<*CODE> */
+int LIS(vector<int> &a) {
+    int n = a.size();
+    vector<int> dp(n, INF);
+    for(int i = 0; i < n; i++) *lower_bound(ALL(dp), a[i]) = a[i];
+    return distance(begin(dp), lower_bound(ALL(dp), INF));
+}

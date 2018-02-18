@@ -1,0 +1,32 @@
+/*
+<NAME> Not recursive SegmentTree (Range Sum Query)
+<TRIGGER> RSQ_efficient
+<TAG> data-structure
+<*NOTE>
+非再帰のセグメント木の実装。
+再起しない分速い。
+
+source: http://codeforces.com/blog/entry/18051
+
+<*CODE> */
+struct RSQ {
+    vector<int> data;
+    int size;
+    RSQ(int n) {
+        size = 1;
+        while (size < n) size <<= 1;
+        data = vector<int>(size << 1, 0);
+    }
+    void add(int i, int x) {
+        data[i += size] += x;
+        while (i > 1) data[i >>= 1] += x;
+    }
+    int getsum(int l, int r) {
+        int res = 0;
+        for(l += size, r += size; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) res += data[l++];
+            if (r & 1) res += data[--r];
+        }
+        return res;
+    }
+};

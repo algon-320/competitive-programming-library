@@ -1,0 +1,16 @@
+/*
+<NAME> 二分累乗法
+<TRIGGER> bonpow
+<TAG> math, etc
+<*NOTE>
+<*CODE> */
+const int MOD = 1e9 + 7;
+int bin_pow${1:_mod}(int a, int b) {
+    int ret = 1;
+    while (b > 0) {
+        if (b & 1) ret = (ret * a)${1: % MOD};
+        a = (a * a)${1: % MOD};
+        b >>= 1;
+    }
+    return ret;
+}

@@ -1,0 +1,31 @@
+/*
+<NAME> Union-Find
+<TRIGGER> unionfind
+<TAG> data-structure, 閉路検出
+<*NOTE>
+根を調べるときに、調べたら根に直接頂点を繋ぎ直している。
+
+source: http://www.prefield.com/algorithm/container/union_find.html
+
+<*CODE> */
+struct union_find {
+    vector<int> data;
+    union_find(int size) : data(size, -1) {}
+    void unite(int x, int y) {
+        x = root(x); y = root(y);
+        if(x != y) {
+            if(data[y] < data[x]) swap(x, y);
+            data[x] += data[y];
+            data[y] = x;
+        }
+    }
+    bool same(int x, int y) {
+        return root(x) == root(y);
+    }
+    int root(int x) {
+        return data[x] < 0 ? x : (data[x] = root(data[x]));
+    }
+    int size(int x) {
+        return -data[root(x)];
+    }
+};

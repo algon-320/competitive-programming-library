@@ -1,0 +1,89 @@
+/*
+<NAME> 最小共通祖先 (Lowest Common Ancestor)
+<TRIGGER> LCA
+<TAG> 木, graph
+<*NOTE>
+<*CODE> */
+// ------------------ RMQ
+vector<int> id(n);
+    vector<int> depth(n);
+    vector<int> vs(n * 2);
+    SegmentTree<pii> rmq(n * 2, [](pii a, pii b){return min(a, b);}, {INF, -1});
+    int k = 0;
+    function<void(int, int, int)> dfs = [&](int v, int p, int d) {
+        id[v] = k;
+        vs[k] = v;
+        depth[v] = d;
+        rmq.update(k, {d, k}); k++;
+        for (int i = 0; i < g[v].size(); i++) {
+            if (g[v][i] != p) {
+                dfs(g[v][i], v, d+1);
+                vs[k] = v;
+                rmq.update(k, {d, k});
+                k++;
+            }
+        }
+    };
+    dfs(0, -1, 0);
+    auto lca = [&](int u, int v) {
+        return vs[rmq.query(min(id[u], id[v]), max(id[u], id[v]) + 1).second];
+    };
+
+//------------- ダブリング
+const int MAX_LOG_N = 17; // N = 10^5
+int N, M;
+vector<vector<int>> t;
+vector<vector<int>> parent;
+vector<int> depth;
+void dfs(int u, int d, int from) {
+    depth[u] = d;
+    parent[u][0] = from;
+    for (int v : t[u]) {
+        if (v != from) {
+            dfs(v, d+1, u);
+        }
+    }
+}
+int lca(int x, int y) {
+    if (depth[x] > depth[y]) swap(x,y);
+    for (int k = 0; k < MAX_LOG_N; k++) {
+        if ((depth[y] - depth[x]) >> k & 1) {
+            y = parent[y][k];
+        }
+    }
+    if (x == y) return x;
+    for (int k = MAX_LOG_N - 1; k >= 0; k--) {
+        if (parent[x][k] != parent[y][k]) {
+            x = parent[x][k];
+            y = parent[y][k];
+        }
+    }
+    return parent[x][0];
+}
+signed main() {
+    cin >> N >> M;
+    t.resize(N);
+    t = vector<vector<int>>(N);
+    parent = vector<vector<int>>(N, vi(MAX_LOG_N + 1, 0));
+    depth = vector<int>(N);
+
+    for (int i = 0; i < M; i++) {
+        int x, y;
+        cin >> x >> y;
+        x--, y--;
+        t[x].push_back(y);
+        t[y].push_back(x);
+    }
+
+    // init
+    dfs(0, 0, -1);
+    for (int k = 0; k < MAX_LOG_N - 1; k++) {
+        for (int v = 0; v < N; v++) {
+            if (parent[v][k] < 0) parent[v][k+1] = -1;
+            else parent[v][k + 1] = parent[parent[v][k]][k];
+        }
+    }
+
+    /////// use LCA ///////
+    return 0;
+}

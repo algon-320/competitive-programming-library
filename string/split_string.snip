@@ -1,0 +1,24 @@
+/*
+<NAME> Split String
+<TRIGGER> split_string
+<TAG> string
+<*NOTE>
+文字列`s`を`delim`で指定した文字列で分割して`result`に格納する。
+
+<*CODE> */
+template <typename T>
+void split(const string& s, const string& delim, T& result) {
+    result.clear();
+    string::size_type pos = 0;
+    while(pos != string::npos){
+        string::size_type p = s.find(delim, pos);
+        if(p == string::npos) {
+            result.push_back(s.substr(pos));
+            break;
+        }
+        else {
+            result.push_back(s.substr(pos, p - pos));
+        }
+        pos = p + delim.size();
+    }
+}

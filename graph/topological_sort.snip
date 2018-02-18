@@ -1,0 +1,30 @@
+/*
+<NAME> トポロジカルソート
+<TRIGGER> topologicalsort
+<TAG> graph, DAG, 閉路検出
+<*NOTE>
+戻り値のvectorの要素数がグラフの頂点数よりも少ない場合、グラフが閉路を含む。
+非連結でも問題なし。
+
+<*CODE> */
+// 戻り値のvectorのサイズがグラフのノード数よりも少ない場合、グラフが閉路を含む
+vector<int> topological_sort(vector<vector<int>> &g) {
+    int n = g.size();
+    vector<int> sorted;
+    sorted.reserve(n);
+    vector<int> deg(n, 0);
+    for (int v = 0; v < n; v++) for (auto &w, g[v]) deg[w]++;
+    queue<int> q;
+    for (int v = 0; v < n; v++) if (deg[v] == 0) q.push(v);
+    while (!q.empty()) {
+        int v = q.front(); q.pop();
+        sorted.push_back(v);
+        for (auto &w: g[v]) {
+            deg[w]--;
+            if (deg[w] == 0) {
+                q.push(w);
+            }
+        }
+    }
+    return sorted;
+}

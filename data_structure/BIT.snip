@@ -1,0 +1,30 @@
+/*
+<NAME> Binary Indexed Tree (Fenwick Tree)
+<TRIGGER> BIT
+<TAG> data-structure
+<*NOTE>
+クエリは1-indexなので注意！
+
+verify: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=2702662#1
+
+<*CODE> */
+// 1-indexed
+struct BIT {
+    vector<int> data;
+    int size;
+    BIT(int n): size(n), data(n, 0) {}
+    void add(int i, int x) {
+        while (i <= size) {
+            data[i] += x;
+            i += i & -i;
+        }
+    }
+    int sum(int i) {
+        int ret = 0;
+        while (i > 0) {
+            ret += data[i];
+            i -= i & -i;
+        }
+        return ret;
+    }
+};

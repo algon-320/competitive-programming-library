@@ -1,0 +1,16 @@
+/*
+<NAME> 素因数分解
+<TRIGGER> factorize
+<TAG> math
+<*NOTE>
+<*CODE> */
+map<int, int> factorize(int a) {
+    map<int, int> ret;
+    for(int i = 2; i * i <= a; i++) {
+        int cnt = 0;
+        while (a % i == 0) a /= i, cnt++;
+        if (cnt != 0) ret[i] = cnt;
+    }
+    if (a != 1) ret[a] = 1;
+    return ret;
+}

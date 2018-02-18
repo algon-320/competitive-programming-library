@@ -1,0 +1,19 @@
+/*
+<NAME> 組み合わせ(パスカルの三角形)
+<TIRGGER> combination
+<TAG> math
+<*NOTE>
+前計算$O(N^2)$
+<*CODE> */
+const int N_MAX = 1001;
+int combination[N_MAX][N_MAX];
+struct combination_init {
+    combination_init() {
+        for (int i = 0; i < N_MAX; i++) combination[i][0] = 1;
+        for (int i = 1; i < N_MAX; i++) {
+            for (int j = 1; j < N_MAX; j++) {
+                combination[i][j] = combination[i - 1][j] + combination[i - 1][j - 1];
+            }
+        }
+    }
+} combination_init;

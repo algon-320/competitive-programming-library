@@ -1,0 +1,52 @@
+/*
+<NAME> 行列累乗
+<TRIGGER>
+<TAG> math
+<*NOTE>
+半環ならば行列累乗可能
+
+<*CODE> */
+using matrix = vector<vector<int>>;
+void resize_matrix(matrix &A, int h, int w, int fill) {
+    A.resize(h);
+    for (int i = 0; i < h; i++) {
+        A[i].resize(w, fill);
+    }
+}
+matrix multiple_matrix(matrix &A, matrix &B,
+  function<int(int, int)> add = [](int a, int b){return a + b;},
+  function<int(int, int)> mul = [](int a, int b){return a * b;}) {
+    int m = A.size();
+    int n = A[0].size();
+    assert(n == B.size());
+    int l = B[0].size();
+    matrix res;
+    resize_matrix(res, m, l, 0);
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < l; j++) {
+            int tmp = 0;
+            for (int k = 0; k < n; k++) {
+                int p = mul(A[i][k], B[k][j]);
+                tmp = add(tmp, p);
+            }
+            res[i][j] = tmp;
+        }
+    }
+    return res;
+}
+matrix pow_matrix(matrix A, int k,
+  function<int(int, int)> add = [](int a, int b){return a + b;},
+  function<int(int, int)> mul = [](int a, int b){return a * b;}) {
+    int n = A.size();
+    assert(n == A[0].size());
+
+    matrix res;
+    resize_matrix(res, n, n, 0);
+    for (int i = 0; i < n; i++) res[i][i] = ~0;
+    while (k > 0) {
+        if (k & 1) res = multiple_matrix(res, A, add, mul);
+        A = multiple_matrix(A, A, add, mul);
+        k >>= 1;
+    }
+    return res;
+}

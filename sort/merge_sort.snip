@@ -1,0 +1,21 @@
+/*
+<NAME> Merge Sort
+<TRIGGER>
+<TAG> sort
+<*NOTE>
+<*CODE> */
+template<class T>
+void merge_sort(vector<T> &a) {
+    size_t n = a.size();
+    if (n==1) return;
+    vector<T> b(begin(a), begin(a) + n/2);
+    vector<T> c(begin(a) + n/2, end(a));
+    merge_sort(b);
+    merge_sort(c);
+    for (size_t i = 0, j = 0, k = 0; i < n; ++i) {
+        if (k == c.size())      a[i] = b[j++];
+        else if (j == b.size()) a[i] = c[k++];
+        else if (b[j] < c[k])   a[i] = b[j++];
+        else                    a[i] = c[k++];
+    }
+}

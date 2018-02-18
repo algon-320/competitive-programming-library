@@ -1,0 +1,52 @@
+/*
+<NAME> Convex Hull Trick
+<TRIGGER> CHT
+<TAG> DP, etc
+<*NOTE>
+位置xを与えたとき、直線群の中での最小値
+$min_{0 \leq i \leq N}\{f_i(x)\}$
+を高速に求める。
+
+- `add_line`: 直線を追加するクエリ。直線の傾きが単調減少するようにクエリを投げること。
+- `get_min`: 最小値を取得するクエリ。xが単調増加するようにクエリを投げること。
+
+<*CODE> */
+using line = pair<int, int>;
+struct ConvexHullTrick {
+    deque<line> L;
+    ConvexHullTrick() {}
+    int f(line l, int x) {
+        return l.first * x + l.second;
+    }
+    bool check(line l1, line l2, line l3) {
+        int a1 = l1.first, a2 = l2.first, a3 = l3.first;
+        int b1 = l1.second, b2 = l2.second, b3 = l3.second;
+        return (a2 - a1) * (b3 - b2) >= (b2 - b1) * (a3 - a2);
+    }
+    // 傾きが単調減少するようにクエリを投げること
+    void add_line(line l) {
+        static line prev = {INF, INF};
+        assert(prev > l);
+        prev = l;
+
+        int m = (int)L.size();
+        while (m >= 2 && check(L[m - 2], L[m - 1], l)) {
+            L.pop_back();
+            m--;
+        }
+        L.emplace_back(l);
+    }
+    // xが単調増加するようにクエリを投げること
+    int get_min(int x) {
+        assert(!L.empty());
+
+        static int prev = -INF;
+        assert(prev < x);
+        prev = x;
+
+        while (L.size() >= 2 && f(L[0], x) >= f(L[1], x)) {
+            L.pop_front();
+        }
+        return f(L[0], x);
+    }
+};

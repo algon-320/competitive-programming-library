@@ -1,0 +1,96 @@
+/*
+<NAME> SegmentTree
+<TRIGGER> SegmentTree
+<TAG> data-structure
+<*NOTE>
+更新$O(log N)$、クエリ$O(log N)$。
+
+- `update_func`: 更新時に使われる関数
+- `merge_func`: クエリの計算に使われる関数
+
+<*CODE> */
+template <class T>
+struct SegmentTree {
+    using func = function<T(T, T)>;
+    int size;
+    vector<T> data;
+    func merger, updater;
+    T ident;
+    SegmentTree(int n, func update_func, func merge_func, T identity_element)
+     : updater(update_func), merger(merge_func), ident(identity_element) {
+        size = 1;
+        while (size < n) size <<= 1;
+        data.resize(size * 2, ident);
+    }
+    void update(int i, T x) {
+        i += size - 1;
+        data[i] = updater(data[i], x);
+        while (i > 0) {
+            i = (i - 1) / 2;
+            data[i] = merger(data[i * 2 + 1], data[i * 2 + 2]);
+        }
+    }
+    T query(int wishL, int wishR, int watchL = 0, int watchR = -1, int k = 0) {
+        if(watchR == -1) watchR = size;
+        if(watchR <= wishL || wishR <= watchL) return ident;
+        if(wishL <= watchL && watchR <= wishR) return data[k];
+        T ld = query(wishL, wishR, watchL, (watchL + watchR) / 2, k * 2 + 1);
+        T rd = query(wishL, wishR, (watchL + watchR) / 2, watchR, k * 2 + 2);
+        return merger(ld, rd);
+    }
+    T at(int i) {
+        return data[i+size-1];
+    }
+};
+
+/*
+// range minimum query
+SegmentTree<int> rmq(100005,[](int old,int new_){return min(old,new_);},[](int a,int b){return min(a,b);},INF);
+*/
+
+
+/*
+//----------------
+// Nodeと切り分け
+template <class Monoid>
+struct SegmentTree {
+    int size;
+    vector<Monoid> data;
+    function<Monoid(Monoid, Monoid)> updater;
+    SegmentTree(int n, function<Monoid(Monoid, Monoid)> update_func): updater(update_func) {
+        size = 1;
+        while (size < n) size <<= 1;
+        data.resize(size * 2 - 1, Monoid::e());
+    }
+    void update(int i, const Monoid x) {
+        i += size - 1;
+        data[i] = updater(data[i], x);
+        while (i > 0) {
+            i = (i - 1) / 2;
+            data[i] = Monoid::op(data[i * 2 + 1], data[i * 2 + 2]);
+        }
+    }
+    Monoid query(int wishL, int wishR, int watchL = 0, int watchR = -1, int k = 0) {
+        if(watchR == -1) watchR = size;
+        if(watchR <= wishL || wishR <= watchL) return Monoid::e();
+        if(wishL <= watchL && watchR <= wishR) return data[k];
+        Monoid ld = query(wishL, wishR, watchL, (watchL + watchR) / 2, k * 2 + 1);
+        Monoid rd = query(wishL, wishR, (watchL + watchR) / 2, watchR, k * 2 + 2);
+        return Monoid::op(ld, rd);
+    }
+    Monoid at(int i) {
+        return data[i + size - 1];
+    }
+};
+
+struct rmq_node {
+    int value;
+    rmq_node(int x): value(x) {}
+    static rmq_node e() {
+        return rmq_node((1LL<<31)-1);
+    }
+    static rmq_node op(const rmq_node &l, const rmq_node &r) {
+        return (l.value < r.value ? l : r);
+    }
+};
+*/

@@ -1,0 +1,67 @@
+/*
+<NAME> 強連結成分分解
+<TRIGGER> SCC
+<TAG> graph, DAG
+<*NOTE>
+使い方
+
+1. StronglyConnectedComponentのコンストラクタに有向グラフを渡す
+2. DAGを呼ぶとdagにDAGが構築される。
+3. SCCを呼ぶと(DAGを呼ぶと中で呼ばれる)、compに強連結成分の番号が入る。(同じ番号なら同じ強連結成分に属している)
+
+<*CODE> */
+struct StronglyConnectedComponent {
+    vector<vector<int>> &g;
+    vector<vector<int>> dag;
+    vector<int> comp;
+    vector<int> vs;
+    StronglyConnectedComponent(vector<vector<int>> &graph) : g(graph) {}
+    // 強連結成分の番号をcompに格納、個数をreturn
+    int SCC() {
+        int n = g.size();
+        comp.resize(n, -1);
+        vector<vector<int>> rg(n);
+        for (int i = 0; i < n; i++)
+            for (auto &x: g[i])
+                rg[x].push_back(i);
+
+        vector<bool> vis(n, false);
+        function<void(int)> dfs1 = [&](int v) {
+            vis[v] = 1;
+            for (auto &x: g[v]) if (!vis[x]) dfs1(x);
+            vs.push_back(v);
+        };
+        for (int i = 0; i < n; i++) if (!vis[i]) dfs1(i);
+
+        fill(begin(vis), end(vis), false);
+        function<void(int, int)> dfs2 = [&](int v, int k) {
+            vis[v] = 1;
+            comp[v] = k;
+            for (auto &x: rg[v]) if(!vis[x]) dfs2(x, k);
+        };
+        int cnt = 0;
+        for (int i = SZ(vs) - 1; i >= 0; i--) {
+            if (!vis[vs[i]]) dfs2(vs[i], cnt++);
+        }
+        return cnt;
+    }
+    // DAGを構築
+    void DAG() {
+        int n = g.size();
+        int sz = SCC();
+        dag = vector<vector<int>>(sz);
+        vector<set<int>> se(sz);
+        for (int i = 0; i < n; i++) se[comp[i]].insert(i);
+        for (int i = 0; i < sz; i++) {
+            set<int> out;
+            for (auto &u: se[i]) {
+                for (auto &v: g[u]) {
+                    out.insert(comp[v]);
+                }
+            }
+            for (auto &x: out) {
+                dag[i].push_back(x);
+            }
+        }
+    }
+};

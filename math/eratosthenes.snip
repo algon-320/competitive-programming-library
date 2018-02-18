@@ -1,0 +1,17 @@
+/*
+<NAME> エラトステネスの篩
+<TRIGGER> eratosthenes
+<TAG> math
+<*NOTE>
+<*CODE> */
+vector<bool> isprime;
+void eratosthenes(int N) {
+    isprime.resize(N + 1);
+    fill(begin(isprime), end(isprime), true);
+    isprime[0] = false;
+    isprime[1] = false;
+    for (int i = 2; i < sqrt(N) + 1; i++)
+        if (isprime[i])
+            for (int j = 2; i * j <= N; j++)
+                isprime[i * j] = false;
+}

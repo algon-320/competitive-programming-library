@@ -1,0 +1,31 @@
+/*
+<NAME> Binary Indexed Tree (Range minmum or maximum query)
+<TRIGGER> BITRMQ
+<TAG> data-structure
+<*NOTE>
+変更クエリが単調増加(単調減少)する場合のみ動作する。
+クエリは1-indexedなので注意！
+
+verify: https://beta.atcoder.jp/contests/dwacon2018-final-open/submissions/2071426
+
+<*CODE>*/
+// 1-indexed
+struct BIT_RMQ {
+    vector<int> data;
+    int size;
+    BIT_RMQ(int n): size(n), data(n, ${2:0}) {}
+    void update(int i, int x) {
+        while (i <= size) {
+            data[i] = ${1:max}(data[i], x);
+            i += i & -i;
+        }
+    }
+    int get_${1:max}(int i) {
+        int ret = ${2:0};
+        while (i > 0) {
+            ret = ${1:max}(ret, data[i]);
+            i -= i & -i;
+        }
+        return ret;
+    }
+};
