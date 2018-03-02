@@ -26,7 +26,7 @@ vector<vector<T>> multiple_matrix(vector<vector<T>> &A, vector<vector<T>> &B,
     resize_matrix(res, m, l, zero);
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < l; j++) {
-            T tmp = 0;
+            T tmp = zero;
             for (int k = 0; k < n; k++) {
                 T p = mul(A[i][k], B[k][j]);
                 tmp = add(tmp, p);
