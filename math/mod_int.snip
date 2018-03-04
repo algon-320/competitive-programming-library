@@ -1,0 +1,35 @@
+<NAME> ModInt
+<TRIGGER> ModInt
+<TAG>
+<*NOTE>
+<*CODE>
+template <int mod = 1000000007>
+class ModInt {
+public:
+    ModInt() : v(0) {}
+    ModInt(int x) : v((x+mod)%mod) {}
+    int value() const {return v;}
+    const ModInt operator+(const ModInt &r) const { return ModInt(this->v + r.v); }
+    const ModInt operator-(const ModInt &r) const { return ModInt(this->v + mod - r.v); }
+    const ModInt operator*(const ModInt &r) const { return ModInt(this->v * r.v); }
+    const ModInt operator/(const ModInt &r) const { return (*this * (~r)); }
+    const ModInt operator~() const { return ModInt(bpow(this->v, mod-2)); }
+    bool operator==(const ModInt &r) const { return this->v == r.v; }
+    bool operator!=(const ModInt &r) const { return this->v != r.v; }
+    ModInt& operator+=(const ModInt &r) { return *this = *this + r; }
+    ModInt& operator-=(const ModInt &r) { return *this = *this - r; }
+    ModInt& operator*=(const ModInt &r) { return *this = *this * r; }
+    ModInt& operator/=(const ModInt &r) { return *this = *this * (~r); }
+private:
+    int v;
+    int bpow(int a, int b) const {
+        int ret = 1;
+        while (b > 0) {
+            if (b & 1) ret = (ret * a) % mod;
+            a = (a * a) % mod;
+            b >>= 1;
+        }
+        return ret;
+    }
+};
+using Mint = ModInt<>;
