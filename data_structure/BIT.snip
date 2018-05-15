@@ -12,7 +12,7 @@ verify: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=2702662#1
 struct BIT {
     vector<int> data;
     int size;
-    BIT(int n): size(n), data(n, 0) {}
+    BIT(int n): size(n + 1), data(n + 1, 0) {}
     void add(int i, int x) {
         while (i <= size) {
             data[i] += x;

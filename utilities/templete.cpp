@@ -16,7 +16,7 @@ using pii=pair<int,int>;
 #define CONTAIN(c,x) (c.find(x)!=end(c))
 #define OUTOFRANGE(y,x,h,w) ((y)<0||(x)<0||(y)>=(h)||(x)>=(w))
 #define dump(...)
-const signed INF_=1001001001; const ll INF=1001001001001001001LL;
+const signed INF_=1001001001; const long long INF=1001001001001001001LL;
 const int DX[9]={0,1,0,-1,1,1,-1,-1,0},DY[9]={-1,0,1,0,-1,1,1,-1,0};
 template<class T> ostream& operator<<(ostream &os,const vector<T> &v) {
     ITR(i,begin(v),end(v))os<<*i<<(i==end(v)-1?"":" ");return os;}
@@ -24,8 +24,8 @@ template<class T> istream& operator>>(istream &is,vector<T> &v) {
     ITR(i,begin(v),end(v)) is>>*i;return is;}
 template<class T,class U> istream& operator>>(istream &is, pair<T,U> &p) {
     is>>p.first>>p.second;return is;}
-template<class T> bool chmax(T &a,const T &b){if(a<b){a=b;return 1;}return 0;}
-template<class T> bool chmin(T &a,const T &b){if(a>b){a=b;return 1;}return 0;}
+template<class T, class U> bool chmax(T &a,const U &b){return a<b?a=b,1:0;}
+template<class T, class U> bool chmin(T &a,const U &b){return a>b?a=b,1:0;}
 template<class T> using heap=priority_queue<T,vector<T>,greater<T>>;
 struct{template<class T> operator T(){T x;cin>>x;return x;}} IN;
 struct before_main_function {
