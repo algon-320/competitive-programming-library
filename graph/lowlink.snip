@@ -1,0 +1,25 @@
+/*
+<NAME> lowlink
+<TRIGGER> lowlink
+<TAG> graph, 橋, 関節点
+<*NOTE>
+lowlinkを求める O(|V|)
+<*CODE> */
+vector<vector<int>> g;
+vector<bool> used_v, used_e;
+vector<int> ord, lowlink;
+int k = 0;
+void dfs(int v) {
+    used[v] = true;
+    ord[v] = lowlink[v] = k++;
+    for (int w : g[v]) {
+        if (!used_v[w]) {
+            used_e[v][w] = true;
+            dfs(w);
+            lowlink[v] = min(lowlink[v], lowlink[w]);  // lowlink[w]は計算済み
+        } else if (!used_e[w][v]) {
+            // v --> w は後退辺
+            lowlink[v] = min(lowlink[v], ord[w]);  // 後退辺を辿った先のordで更新(1度までしか後退辺を辿ることはできない)
+        }
+    }
+}
