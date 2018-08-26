@@ -1,0 +1,69 @@
+/*
+<NAME> 完全永続 SegmentTree
+<TRIGGER> PersistentSegmentTree
+<TAG> data-structure
+<*NOTE>
+完全永続セグメントツリー
+
+- [CSA Tree Nodes Sets](https://csacademy.com/contest/archive/task/tree-nodes-sets/statement/)
+
+<*CODE> */
+template <typename Monoid>
+struct PersistentSegmentTree {
+    using T = typename Monoid::T;
+    struct Node { T val; Node *left, *right; };
+    Node* create_node(const T& v = Monoid::identity(), Node* left = nullptr, Node* right = nullptr) {
+        static Node pool[10000007];
+        static int cnt = 0;
+        pool[cnt].val = v;
+        pool[cnt].left = left;
+        pool[cnt].right = right;
+        return &pool[cnt++];
+    }
+
+    size_t size;
+    vector<Node*> roots;
+    PersistentSegmentTree(size_t n, const T& v = Monoid::identity()) {
+        size = 1;
+        while (size < n) size <<= 1;
+        roots.push_back(build_tree(size));
+    }
+
+    Node* build_tree(size_t sz) {
+        if (sz == 1) return create_node();
+        return create_node(Monoid::identity(), build_tree(sz / 2), build_tree(sz / 2));
+    }
+
+    static T modify_update(const T& a, const T& b) { return b; }
+    static T modify_add(const T& a, const T& b) { return a + b; }
+    int update(int t, size_t i, const T& v, const function<T(T, T)>& func = modify_update) {
+        assert(t < roots.size());
+        Node* new_root = update(i, 0, size, roots[t], v, func);
+        roots.push_back(new_root);
+        return roots.size() - 1;  // 新しい時間を返す
+    }
+    Node* update(size_t i, size_t l, size_t r, Node *tree, const T& v, const function<T(T, T)>& func = modify_update) {
+        if(i + 1 <= l || r <= i) return tree;
+        if(i <= l && r <= i + 1) return create_node(func(tree->val, v));
+        size_t m = (l + r) / 2;
+        Node* left = update(i, l, m, tree->left, v, func);
+        Node* right = update(i, m, r, tree->right, v, func);
+        return create_node(Monoid::op(left->val, right->val), left, right);
+    }
+
+    T query(int t, size_t l, size_t r) {
+        assert(t < roots.size());
+        return query(l, r, 0, size, roots[t]);
+    }
+    T query(size_t wishl, size_t wishr, size_t watchl, size_t watchr, Node* tree) {
+        if (wishr <= watchl || watchr <= wishl) return Monoid::identity();
+        if (wishl <= watchl && watchr <= wishr) return tree->val;
+        size_t m = (watchl + watchr) / 2;
+        return Monoid::op(query(wishl, wishr, watchl, m, tree->left), query(wishl, wishr, m, watchr, tree->right));
+    }
+};
+struct RSQ {
+    using T = int;
+    static T op(T a, T b) { return a + b; }
+    static constexpr T identity() { return 0; }
+};

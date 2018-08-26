@@ -1,0 +1,59 @@
+/*
+<NAME> Union-Find 頂点移動機能付き
+<TRIGGER> unionfind_movable
+<TAG> data-structure, 閉路検出, unionfind
+<*NOTE>
+UVa 11987 - Almost Union-Find
+
+初期状態で、各要素の根となるノードを余分に持っておく。
+マージする操作では根に別の根が繋がれることしか起きず、root()でも根に繋ぎ直されるだけ
+→余分な根のノードに子が出来るだけで、値のノードには子が出来ない(常に葉ノード)
+→簡単に移動出来る
+
+空の集合の根となるノードを用意出来ればそこへmoveすることで削除が実現できそうだが、頂点が増えていくので簡単ではない。
+<*CODE> */
+// UVa 11987 - Almost Union-Find
+struct UnionFind {
+    int N;
+    vector<int> size;
+    vector<int> sum;
+    vector<int> parent;
+    UnionFind(int n) : N(n), size(n*2, 0), sum(n*2, 0), parent(n*2) {
+        for (int i = 0; i < n; i++) {
+            parent[i] = i+n;
+            parent[i+n] = i+n;
+            size[i+n] += 1;
+            sum[i+n] += i;
+        }
+    }
+    void unite(int x, int y) {
+        x = root(x); y = root(y);
+        if (x != y) {
+            if (get_size(x) > get_size(y)) swap(x, y);
+            size[y] += size[x];  // size
+            sum[y] += sum[x];    // sum
+            parent[x] = y;       // x --> y
+        }
+    }
+    void move(int x, int y) {
+        int x_root = root(x);
+        int y_root = root(y);
+        if (x_root != y_root) {
+            size[x_root]--;
+            size[y_root]++;
+            sum[x_root] -= x;    // sum - x
+            sum[y_root] += x;    // sum + x
+            parent[x] = y_root;  // x --> y
+        }
+    }
+    int root(int x) {
+        if (parent[x] == x) return x;
+        return parent[x] = root(parent[x]);
+    }
+    int get_size(int x) {
+        return size[root(x)];
+    }
+    int get_sum(int x) {
+        return sum[root(x)];
+    }
+};

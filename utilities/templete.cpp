@@ -14,8 +14,10 @@ using pii=pair<int,int>;
 #define REPR(i,n) for(int i=(int)(n);i>=0;--i)
 #define SZ(c) ((int)c.size())
 #define CONTAIN(c,x) (c.find(x)!=end(c))
-#define OUTOFRANGE(y,x,h,w) ((y)<0||(x)<0||(y)>=(h)||(x)>=(w))
+#define INSEG(l,x,r) ((l)<=(x)&&(x)<(r))
 #define dump(...)
+#define pb push_back
+#define _ 0
 const signed INF_=1001001001; const long long INF=1001001001001001001LL;
 const int DX[9]={0,1,0,-1,1,1,-1,-1,0},DY[9]={-1,0,1,0,-1,1,1,-1,0};
 template<class T> ostream& operator<<(ostream &os,const vector<T> &v) {
@@ -27,16 +29,15 @@ template<class T,class U> istream& operator>>(istream &is, pair<T,U> &p) {
 template<class T, class U> bool chmax(T &a,const U &b){return a<b?a=b,1:0;}
 template<class T, class U> bool chmin(T &a,const U &b){return a>b?a=b,1:0;}
 template<class T> using heap=priority_queue<T,vector<T>,greater<T>>;
-struct{template<class T> operator T(){T x;cin>>x;return x;}} IN;
 struct before_main_function {
     before_main_function() {
         //SKIPBEGIN
         #ifdef int
-            cerr<<"\x1b[7m"<<"'int' is 'long long'"<<"\x1b[m"<<endl;
+            cerr << "\x1b[7m" << "'int' is 'long long'" << "\x1b[m" << endl;
         #endif
         //SKIPEND
-        cin.tie(0);ios::sync_with_stdio(false);
-        cout<<setprecision(15)<<fixed;
+        cin.tie(0); ios::sync_with_stdio(false);
+        cout << setprecision(15) << fixed;
         #define endl "\n"
     }
 } before_main_function;

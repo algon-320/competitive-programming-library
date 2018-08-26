@@ -1,0 +1,42 @@
+/*
+<NAME> 部分永続 Union-Find
+<TRIGGER> PersistentUnionFind
+<TAG> data-structure, 閉路検出, unionfind, 永続データ構造
+<*NOTE>
+ある時刻についてのroot、ある時刻についてのsizeを求められる。
+
+- [CODE THANKS FESTIVAL 2017 H - Union Sets](https://beta.atcoder.jp/contests/code-thanks-festival-2017-open/tasks/code_thanks_festival_2017_h)
+- size : [AGC002 D - Stamp Rally](https://beta.atcoder.jp/contests/agc002/tasks/agc002_d)
+<*CODE> */
+struct PersistentUnionFind {
+    vector<int> parent;
+    vector<int> time;
+    vector<vector<pair<int, int>>> history;
+    int T;
+    PersistentUnionFind(int n) : parent(n, -1), time(n, INF), history(n, vector<pair<int, int>>(1, {0, 1})), T(0) {}
+    void unite(int x, int y) {
+        T++;
+        x = root(x), y = root(y);
+        if (x != y) {
+            if (size(x) > size(y)) swap(x, y);
+            parent[y] += parent[x];
+            parent[x] = y;
+            time[x] = T;
+            history[y].push_back({T, -parent[y]});  // 時刻Tからの集合yのサイズ
+        }
+    }
+    int root(int x, int t = -1) {
+        if (t == -1) t = T;
+        if (time[x] > t) return x;
+        return root(parent[x], t);
+    }
+    int same(int x, int y, int t = -1) {
+        if (t == -1) t = T;
+        return root(x, t) == root(y, t);
+    }
+    int size(int x, int t = -1) {
+        if (t == -1) t = T;
+        if (time[x] > t) return prev(upper_bound(begin(history[x]), end(history[x]), pair<int, int>{t, INF}))->second;
+        else return size(parent[x], t);
+    }
+};

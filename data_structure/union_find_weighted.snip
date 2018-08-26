@@ -1,0 +1,54 @@
+/*
+<NAME> Union-Find 重みつき
+<TRIGGER> unionfind_weighted
+<TAG> data-structure, 閉路検出, unionfind
+<*NOTE>
+https://beta.atcoder.jp/contests/abc087/tasks/arc090_b
+
+<*CODE> */
+template <typename T>
+struct WeightedUnionFind {
+    vector<int> parent;
+    vector<int> rank;
+    vector<T> diff_weight;
+    WeightedUnionFind(int n) : parent(n, -1), rank(n, 0), diff_weight(n, 0) {}
+
+    // weight(y) - weight(x) = w となるようにマージ
+    void unite(int x, int y, T w) {
+        w = weight(y) - weight(x) - w;
+        // weight(y) - weight(x) = w を満たすために w を修正(これから変更するのはroot間のdiff)
+        x = root(x), y = root(y);
+        if (x != y) {
+            if (rank[x] > rank[y]) swap(x, y), w = -w;
+            if (rank[x] == rank[y]) rank[y]++; // rank
+            parent[y] += parent[x];  // size
+            parent[x] = y;
+            diff_weight[x] = w;
+        }
+    }
+    
+    int root(int x) {
+        if (parent[x] < 0) return x;
+        int r = root(parent[x]);
+        diff_weight[x] += diff_weight[parent[x]];
+        return parent[x] = r;
+    }
+
+    bool same(int x, int y) {
+        return root(x) == root(y);
+    }
+
+    int size(int x) {
+        return -parent[root(x)];
+    }
+    
+    T weight(int x) {
+        root(x);  // 経路圧縮＆重み更新
+        return diff_weight[x];
+    }
+
+    // weight(y) - weight(x)
+    T diff(int x, int y) {
+        return weight(y) - weight(x);
+    }
+};

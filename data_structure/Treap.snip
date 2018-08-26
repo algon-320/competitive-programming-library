@@ -4,9 +4,10 @@
 <*NOTE>
 - 列として使うときはTrepArray、setとして使うときはTreapOrderedSet
 <*CODE>
-template <typename T, T ZERO>
+template <typename Monoid>
 class Treap {
-public:
+protected:
+    using T = typename Monoid::T;
     struct Node {
         T val;
         T data;
@@ -28,28 +29,9 @@ public:
     Treap() : root(nullptr) {}
     virtual ~Treap() { delete root; }
 
-    const Node *get_root() { return root; }
-
+    Node *get_root() { return root; }
+    
     size_t size() { return size(root); }
-    size_t size(Node *v) { return !v ? 0 : v->size; }
-
-    Node *update(Node *v) {
-        if (!v) return nullptr;
-        v->size = size(v->left) + size(v->right) + 1;
-        v->data = eval(v);
-        return v;
-    }
-
-    T eval(Node *v) {
-        if (!v) return ZERO;
-        if (v->cached) return v->data;
-        T l = ZERO, r = ZERO;
-        if (v->left) l = eval(v->left);
-        if (v->right) r = eval(v->right);
-        v->data = min(v->val, min(l, r));
-        v->cached = true;
-        return v->data;
-    }
 
     // [L, R)
     T query(size_t L, size_t R) {
@@ -63,7 +45,41 @@ public:
         return ret;
     }
 
-    Node *merge(Node *l, Node *r) {
+    void insert(size_t k, T val) {
+        root = insert(root, k, val);
+    }
+
+    void erase(size_t k) {
+        root = erase(root, k);
+    }
+    
+    T find(size_t k) { 
+        return find(root, k)->val;
+    }
+    
+    static size_t size(Node *v) {
+        return !v ? 0 : v->size;
+    }
+
+    static Node *update(Node *v) {
+        if (!v) return nullptr;
+        v->size = size(v->left) + size(v->right) + 1;
+        v->data = eval(v);
+        return v;
+    }
+
+    static T eval(Node *v) {
+        if (!v) return Monoid::identity;
+        if (v->cached) return v->data;
+        T l = Monoid::identity, r = Monoid::identity;
+        if (v->left) l = eval(v->left);
+        if (v->right) r = eval(v->right);
+        v->data = Monoid::op(v->val, Monoid::op(l, r));
+        v->cached = true;
+        return v->data;
+    }
+
+    static Node *merge(Node *l, Node *r) {
         if (!l or !r)
             return l ? l : r;
         if (l->priority > r->priority) {
@@ -77,7 +93,7 @@ public:
         }
     }
     // [0, k), [k, n)
-    pair<Node*, Node*> split(Node *v, size_t k) {
+    static pair<Node*, Node*> split(Node *v, size_t k) {
         if (!v) return {nullptr, nullptr};
         size_t ls = size(v->left);
         if (k <= ls) {
@@ -93,32 +109,38 @@ public:
         }
     }
 
-    void insert(size_t k, T val) {
-        root = insert(root, k, val);
+    // [0, l) [l, r) [r, n)
+    static tuple<Node*, Node*, Node*> split(Node *v, size_t l, size_t r) {
+        Node *left, *middle, *right;
+        tie(middle, right) = split(v, r);
+        tie(left, middle) = split(middle, l);
+        return make_tuple(left, middle, right);
     }
-    Node *insert(Node *t, size_t k, T val) {
+    static Node* merge(initializer_list<Node*> l) {
+        if (l.size() == 0) return nullptr;
+        auto ret = *begin(l);
+        for (auto itr = next(begin(l)); itr != end(l); itr++) {
+            ret = merge(ret, *itr);
+        }
+        return ret;
+    }
+
+    static Node *insert(Node *t, size_t k, T val) {
         auto s = split(t, k);
         t = merge(s.first, new Node(val));
         t = merge(t, s.second);
         return update(t);
     }
 
-    void erase(size_t k) {
-        root = erase(root, k);
-    }
-    Node *erase(Node *t, size_t k) {
+    static Node *erase(Node *t, size_t k) {
         Node *l, *m, *r;
-        tie(l, r) = split(t, k + 1);
-        tie(l, m) = split(l, k);
+        tie(l, m, r) = split(t, k, k + 1);
         t = merge(l, r);
         delete m;
         return update(t);
     }
 
-    T &find(size_t k) { 
-        return find(root, k)->val;
-    }
-    Node *find(Node *t, size_t k) {
+    static Node *find(Node *t, size_t k) {
         size_t ls = size(t->left);
         if (ls == k) return t;
         if (k < ls) return find(t->left, k);
@@ -126,117 +148,123 @@ public:
     }
 };
 
-template <typename T, T ZERO>
-class TreapArray : public Treap<T, ZERO> {
-    using Node = typename Treap<T, ZERO>::Node;
+template <typename Monoid>
+class TreapArray : public Treap<Monoid> {
+    using T = typename Monoid::T;
 public:
+    TreapArray() : Treap<Monoid>() {}
+    TreapArray(size_t n) : Treap<Monoid>() {
+        for (int i = 0; i < n; i++)
+            this->push_back(Monoid::identity);
+    }
     void change(size_t p, T value) {
         this->erase(p);
         this->insert(p, value);
     }
-    void push_back(T value) { this->insert(this->size(this->root), value); }
-    void push_front(T value) { this->insert(0, value); }
+    void push_back(const T& value) { this->insert(this->size(this->root), value); }
+    void push_front(const T& value) { this->insert(0, value); }
     void pop_back() { this->erase(this->size(this->root) - 1); }
     void pop_front() { this->erase(0); }
-    T &back() { return this->find(this->size(this->root) - 1); }
-    T &front() { return this->find(0); }
+    T back() { return this->find(this->size(this->root) - 1); }
+    T front() { return this->find(0); }
 };
 
-template <typename T, T ZERO>
-class TreapOrderedSet : public Treap<T, ZERO> {
-    using Node = typename Treap<T, ZERO>::Node;
+template <typename Monoid>
+class TreapOrderedSet : public Treap<Monoid> {
+    using T = typename Monoid::T;
+    using Node = typename Treap<Monoid>::Node;
 public:
-    TreapOrderedSet() : Treap<T, ZERO>() {}
-    TreapOrderedSet(Node *n) : Treap<T, ZERO>(n) {}
+    TreapOrderedSet() : Treap<Monoid>() {}
+    TreapOrderedSet(Node *n) : Treap<Monoid>(n) {}
     
     pair<TreapOrderedSet, TreapOrderedSet> split_less(const T &x) {
-        auto p = __split(this->root, x, false);
+        auto p = split(this->root, x, false);
         return {TreapOrderedSet(p.first), TreapOrderedSet(p.second)};
     }
     pair<TreapOrderedSet, TreapOrderedSet> split_leq(const T &x) {
-        auto p = __split(this->root, x, true);
+        auto p = split(this->root, x, true);
         return {TreapOrderedSet(p.first), TreapOrderedSet(p.second)};
     }
-    pair<Node*, Node*> __split(Node *n, const T &x, bool leq) {
+    static pair<Node*, Node*> split(Node *n, const T &x, bool leq) {
         if (n == nullptr) return {nullptr, nullptr};
         if (n->val < x || (leq && n->val == x)) {
-            auto p = __split(n->right, x, leq);
+            auto p = split(n->right, x, leq);
             n->right = p.first;
-            return {this->update(n), p.second};
+            return {update(n), p.second};
         } else {
-            auto p = __split(n->left, x, leq);
+            auto p = split(n->left, x, leq);
             n->left = p.second;
-            return {p.first, this->update(n)};
+            return {p.first, update(n)};
         }
     }
 
-    void insert(const T &x) { this->root = __insert(this->root, x); }
-    Node *__insert(Node *n, const T &x) {
-        auto p = __split(n, x, false);
-        return this->merge(this->merge(p.first, new Node(x)), p.second);
+    void insert(const T &x) { this->root = insert(this->root, x); }
+    static Node *insert(Node *n, const T &x) {
+        auto p = split(n, x, false);
+        return merge(merge(p.first, new Node(x)), p.second);
     }
 
     void erase_one(const T &x) {
         assert(contains(this->root, x));
-        this->root = __erase_one(this->root, x);
+        this->root = erase_one(this->root, x);
     }
-    Node *__erase_one(Node *n, const T &x) {
+    static Node *erase_one(Node *n, const T &x) {
         Node *l, *m, *r;
-        tie(l, r) = __split(n, x, false);
-        tie(m, r) = this->split(r, 1);
-        return this->merge(l, r);
+        tie(l, r) = split(n, x, false);
+        tie(m, r) = split(r, 1);
+        return merge(l, r);
     }
 
-    void erase_all(const T &x) { this->root = __erase_all(this->root, x); }
-    Node *__erase_all(Node *n, const T &x) {
+    void erase_all(const T &x) { this->root = erase_all(this->root, x); }
+    static Node *erase_all(Node *n, const T &x) {
         Node *l, *m, *r;
-        tie(l, r) = __split(n, x, false);
-        tie(m, r) = __split(r, x, true);
-        return this->merge(l, r);
+        tie(l, r) = split(n, x, false);
+        tie(m, r) = split(r, x, true);
+        return merge(l, r);
     }
 
-    size_t count_less(const T &x) { return __count(this->root, x, false); }
-    size_t count_leq(const T &x) { return __count(this->root, x, true); }
-    size_t __count(const Node *n, const T &x, bool leq) {
+    size_t count_less(const T &x) { return count(this->root, x, false); }
+    size_t count_leq(const T &x) { return count(this->root, x, true); }
+    size_t count(const T &x) { return count_leq(x) - count_less(x); }
+    static size_t count(const Node *n, const T &x, bool leq) {
         if (n == nullptr) return 0;
         if (n->val < x || (leq && n->val == x)) {
-            return this->size(n->left) + 1 + __count(n->right, x, leq);
+            return size(n->left) + 1 + count(n->right, x, leq);
         } else {
-            return __count(n->left, x, leq);
+            return count(n->left, x, leq);
         }
     }
-    size_t count(const T &x) { return count_leq(x) - count_less(x); }
 
-    bool contains(const T &x) { return __contains(this->root, x); }
-    bool __contains(const Node *n, const T &x) {
+    bool contains(const T &x) { return contains(this->root, x); }
+    static bool contains(const Node *n, const T &x) {
         if (n == nullptr) return false;
         if (n->val < x) {
-            return __contains(n->right, x);
+            return contains(n->right, x);
         } else if (n->val == x) {
             return true;
         } else {
-            return __contains(n->left, x);
+            return contains(n->left, x);
         }
     }
 
-    T lower_bound(const T &x) { return __lower_bound(this->root, x)->val; }
-    Node *__lower_bound(Node *n, const T &x) {
+    T lower_bound(const T &x) { return lower_bound(this->root, x)->val; }
+    static Node *lower_bound(Node *n, const T &x) {
         if (n == nullptr) return nullptr;
         if (n->val < x) {
-            return __lower_bound(n->right, x);
+            return lower_bound(n->right, x);
         } else {
-            Node *res = __lower_bound(n->left, x);
+            Node *res = lower_bound(n->left, x);
             return res ? res : n;
         }
     }
 
-    T upper_bound(const T &x) { return __upper_bound(this->root, x)->val; }
-    Node *__upper_bound(Node *n, const T &x) {
+    T upper_bound(const T &x) { return upper_bound(this->root, x)->val; }
+    static Node *upper_bound(Node *n, const T &x) {
         if (n == nullptr) return nullptr;
         if (n->val <= x) {
-            return __upper_bound(n->right, x);
+            return upper_bound(n->right, x);
         } else {
-            Node *res = __upper_bound(n->left, x);
+            Node *res = upper_bound(n->left, x);
             return res ? res : n;
         }
     }
