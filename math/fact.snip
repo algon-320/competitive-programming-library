@@ -28,5 +28,6 @@ struct init_fact {
     }
 } init_fact;
 int combination(int n, int r) {
+    if (n < r) return 0;
     return ((fact[n] * fact_inv[n - r]) % MOD * fact_inv[r]) % MOD;
 }
