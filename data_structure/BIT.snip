@@ -14,7 +14,7 @@ struct BIT {
     int size;
     BIT(int n): size(n + 1), data(n + 1, 0) {}
     void add(int i, int x) {
-        while (i <= size) {
+        while (i < size) {
             data[i] += x;
             i += i & -i;
         }
