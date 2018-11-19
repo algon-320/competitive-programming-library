@@ -1,0 +1,75 @@
+/*
+<NAME> 凸包
+<TRIGGER>
+<TAG> geometry
+<*NOTE>
+「最もy座標の小さい点のうち最もx座標の小さい点」から初めて反時計周りに辿った凸包を返す
+<*CODE> */
+template <class P>  // P.x, P.y
+vector<P> convex_hull(vector<P> points) {
+    int N = points.size();
+    assert(N >= 2);
+    
+    using T = decltype(points[0].x);
+    sort(begin(points), end(points), [](const P& l, const P& r) { return (l.y == r.y) ? (l.x < r.x) : (l.y < r.y); });
+    stack<P> left, right;
+
+    auto tmp = [&](bool construct_left) {
+        auto& out = (construct_left ? left : right);
+        stack<pair<T, T>> arg;
+
+        out.push(points[0]);
+        out.push(points[1]);
+        arg.push({points[1].x - points[0].x, points[1].y - points[0].y});
+        for (int i = 2; i < N; i++) {
+            T dx, dy;
+            while (1) {
+                P last = out.top();
+                dx = points[i].x - last.x, dy = points[i].y - last.y;
+                if (arg.empty()) break;
+                T numer = arg.top().first, denom = arg.top().second;
+                if (construct_left && dx * denom < dy * numer) {
+                    arg.pop(); out.pop();
+                } else if (!construct_left && dx * denom > dy * numer) {
+                    arg.pop(); out.pop();
+                } else {
+                    break;
+                }
+            }
+            arg.push({dx, dy});
+            out.push(points[i]);
+        }
+    };
+    tmp(false); // right
+    tmp(true);  // left
+
+    vector<P> ret;
+    ret.reserve(left.size() + right.size());
+    while (!right.empty()) {
+        auto& p = right.top(); right.pop();
+        ret.push_back(p);
+    }
+    reverse(begin(ret), end(ret));
+    left.pop();
+    while (left.size() > 1) {
+        auto& p = left.top(); left.pop();
+        ret.push_back(p);
+    }
+    return ret;
+}
+
+template <class P>  // P.x, P.y
+double angle(P vec1, P vec2) {
+    double len1 = sqrt(vec1.x * vec1.x + vec1.y * vec1.y);
+    double len2 = sqrt(vec2.x * vec2.x + vec2.y * vec2.y);
+    double dot = vec1.x * vec2.x + vec1.y * vec2.y;
+    return acos(dot / (len1 * len2));
+}
+
+struct Point {
+    int x;
+    int y;
+    pair<int, int> getPair() { return {x, y}; }
+    Point operator-(const Point& r) { return Point{x - r.x, y - r.y}; }
+    Point operator+(const Point& r) { return Point{x + r.x, y + r.y}; }
+};
