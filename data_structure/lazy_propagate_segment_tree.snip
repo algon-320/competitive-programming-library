@@ -12,35 +12,29 @@
 <*CODE> */
 template <class T>
 struct LazySegmentTree {
-    using func = function<T(T, T)>;
-    int size;
-    vector<T> data;
-    vector<T> lazy;
-    vector<T> width;
-    function<T(T, T, int)> updater;
-    func merger, propagater;
-    T ident_prop, ident_query;
+    using elem_t = typename T::T;
 
-    LazySegmentTree(int n, function<T(T, T, int)> update_func, func merge_func,
-      func propagate_func, T identity_propagate, T identity_query)
-      : updater(update_func), merger(merge_func), propagater(propagate_func),
-      ident_prop(identity_propagate), ident_query(identity_query) {
-        size = 1;
-        while (size < n) size <<= 1;
-        data.resize(size * 2, ident_query);
-        lazy.resize(size * 2, ident_prop);
-        width.resize(size * 2, 1);
+    int size;
+    vector<elem_t> data;
+    vector<elem_t> lazy;
+    vector<int> width;
+
+    LazySegmentTree(int n)
+    : size(calc_size(n)),
+      data(size * 2, T::query_identity()), lazy(size * 2, T::prop_identity()), width(size * 2, 1) {
         for (int i = size - 2; i >= 0; i--) {
             width[i] = width[i * 2 + 1] + width[i * 2 + 2];
         }
     }
+
     void lazy_propagate(int p) {
-        data[p] = updater(data[p], lazy[p], width[p]);
-        if (p < size-1) {
-            lazy[p * 2 + 1] = propagater(lazy[p * 2 + 1], lazy[p]);
-            lazy[p * 2 + 2] = propagater(lazy[p * 2 + 2], lazy[p]);
+        if (lazy[p] == T::prop_identity()) return;
+        data[p] = T::update(data[p], lazy[p], width[p]);
+        if (p < size - 1) {
+            lazy[p * 2 + 1] = T::prop(lazy[p * 2 + 1], lazy[p]);
+            lazy[p * 2 + 2] = T::prop(lazy[p * 2 + 2], lazy[p]);
         }
-        lazy[p] = ident_prop;
+        lazy[p] = T::prop_identity();
     }
     void update(int wishL, int wishR, int x, int watchL = 0, int watchR = -1, int k = 0) {
         if (watchR == -1) watchR = size;
@@ -49,7 +43,7 @@ struct LazySegmentTree {
             return;
         }
         if (wishL <= watchL && watchR <= wishR) {
-            lazy[k] = propagater(lazy[k], x);
+            lazy[k] = T::prop(lazy[k], x);
             lazy_propagate(k);
             return;
         }
@@ -58,35 +52,85 @@ struct LazySegmentTree {
         lazy_propagate(k);
         update(wishL, wishR, x, watchL, mid, k * 2 + 1);
         update(wishL, wishR, x, mid, watchR, k * 2 + 2);
-        data[k] = merger(data[k * 2 + 1], data[k * 2 + 2]);
+        data[k] = T::merge(data[k * 2 + 1], data[k * 2 + 2]);
     }
-    T query(int wishL, int wishR, int watchL = 0, int watchR = -1, int k = 0) {
+    elem_t query(int wishL, int wishR, int watchL = 0, int watchR = -1, int k = 0) {
         if (watchR == -1) watchR = size;
-        if (watchR <= wishL || wishR <= watchL) return ident_query;
+        if (watchR <= wishL || wishR <= watchL) return T::query_identity();
         if (wishL <= watchL && watchR <= wishR) {
             lazy_propagate(k);
             return data[k];
         }
         lazy_propagate(k);
-        T ld = query(wishL, wishR, watchL, (watchL + watchR) / 2, k * 2 + 1);
-        T rd = query(wishL, wishR, (watchL + watchR) / 2, watchR, k * 2 + 2);
-        return merger(ld, rd);
+        elem_t ld = query(wishL, wishR, watchL, (watchL + watchR) / 2, k * 2 + 1);
+        elem_t rd = query(wishL, wishR, (watchL + watchR) / 2, watchR, k * 2 + 2);
+        return T::merge(ld, rd);
+    }
+
+private:
+    int calc_size(int n) {
+        int ret = 1;
+        while (ret < n) ret <<= 1;
+        return ret;
     }
 };
 
-/// Range Add - Range Sum
 /*
-auto update = [](int a, int b, int w) {return a + b * w;};
-auto merge = [](int a, int b) {return a + b;};
-auto propagate = [](int a, int b) {return a + b;};
-LazySegmentTree<int> radd_rsum(n, update, merge, propagate, 0, 0);
-*/
+struct RangeAddRangeSum {
+    using T = int;
+    static T update(T oldv, T newv, int seg_width) {
+        dump(oldv, newv, seg_width);
+        return oldv + newv * seg_width;
+    }
+    static T prop_identity() {
+        return 0;
+    }
+    static T prop(T oldv, T newv) {
+        return oldv + newv;
+    }
+    static T query_identity() {
+        return 0;
+    }
+    static T merge(T l, T r) {
+        return l + r;
+    }
+};
 
-/// Starry Sky Tree
-/*
-auto update = [](int a, int b, int w) {return a + b;};
-auto merge = [](int a, int b) {return min(a, b);};
-auto propagate = [](int a, int b) {return a + b;};
-LazySegmentTree<int> seg(N, update, merge, propagate, 0, INF);
-seg.update(0, N, -INF);
+struct RangeUpdateRangeMinimum {
+    using T = int;
+    static T update(T oldv, T newv, int seg_width) {
+        return newv;
+    }
+    static T prop_identity() {
+        return -1;
+    }
+    static T prop(T oldv, T newv) {
+        return newv;
+    }
+    static T query_identity() {
+        return (1LL << 31) - 1;
+    }
+    static T merge(T l, T r) {
+        return min(l, r);
+    }
+};
+
+struct RangeAddRangeMinimum {
+    using T = int;
+    static T update(T oldv, T newv, int seg_width) {
+        return oldv + newv;
+    }
+    static T prop_identity() {
+        return 0;
+    }
+    static T prop(T oldv, T newv) {
+        return oldv + newv;
+    }
+    static T query_identity() {
+        return INF;
+    }
+    static T merge(T l, T r) {
+        return min(l, r);
+    }
+};
 */
