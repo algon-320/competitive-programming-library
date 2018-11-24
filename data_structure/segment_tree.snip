@@ -20,7 +20,7 @@ struct SegmentTree {
     template <class InputIt>
     SegmentTree(InputIt first, InputIt last) : n(distance(first, last)), t(n << 1, Monoid::identity()) {
         copy(first, last, begin(t) + n);
-        for (size_t i = n; i > 0; i--) prop_to(i);
+        for (size_t i = n - 1; i > 0; i--) prop_to(i);
     }
     static T modify_update(const T& a, const T& b) { return b; }
     static T modify_add(const T& a, const T& b) { return a + b; }
