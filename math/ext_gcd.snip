@@ -1,0 +1,16 @@
+/*
+<NAME> 拡張ユークリッドの互除法
+<TRIGGER> extgcd
+<TAG> math
+<*NOTE>
+<*CODE> */
+int ext_gcd(int a, int b, int *x = nullptr, int *y = nullptr) {
+    if (b == 0) {
+        if (x) *x = 1;
+        if (y) *y = 0;
+        return a;
+    }
+    int g = ext_gcd(b, a % b, y, x);
+    if (x && y) (*y) -= a / b * (*x);
+    return g;
+}
