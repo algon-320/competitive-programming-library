@@ -3,7 +3,7 @@
 <TAG>
 <*NOTE>
 <*CODE>
-template <int mod = 1000000007>
+template <int mod>
 class ModInt {
 public:
     ModInt() : v(0) {}
@@ -32,4 +32,4 @@ private:
         return ret;
     }
 };
-using Mint = ModInt<>;
+using Mint = ModInt<1000000007>;

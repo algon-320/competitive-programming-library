@@ -1,0 +1,34 @@
+/*
+<NAME> 階乗・組み合わせ(mod)
+<TRIGGER> factorial
+<TAG> math
+<*NOTE>
+ModIntを上に書くこと
+
+<*CODE> */
+struct Factorial {
+    static constexpr int MAX_N = 2000006;
+    vector<Mint> fact, fact_inv;
+    Factorial(size_t size = MAX_N) : fact(size), fact_inv(size) {
+        fact[0] = fact_inv[0] = 1;
+        for (int i = 1; i < MAX_N; ++i) {
+            fact[i] = fact[i - 1] * i;
+            fact_inv[i] = ~fact[i];
+        }
+    }
+    Mint cobmination(int N, int R) {
+        if (N < R) return 0;
+        return fact[N] * fact_inv[N - R] * fact_inv[R];
+    }
+    static Mint bin_pow(Mint x, int p) {
+        if (x.value() == 0) return x;
+        Mint prod = 1;
+        while (p > 0) {
+            if (p & 1) prod *= x;
+            x *= x;
+            p >>= 1;
+        }
+        return prod;
+    }
+};
+// MAX_N 注意！
