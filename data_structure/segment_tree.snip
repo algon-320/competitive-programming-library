@@ -5,39 +5,44 @@
 <*NOTE>
 更新$O(log N)$、クエリ$O(log N)$。
 <*CODE> */
-template<typename Monoid>
-struct SegmentTree {
+template <class Monoid>
+class SegmentTree {
     using T = typename Monoid::T;
-    size_t n;
-    vector<T> t;
-
-    void prop_to(std::size_t i) { t[i] = Monoid::op(t[i << 1], t[i << 1 | 1]); }
-    SegmentTree(size_t size, const T& v = Monoid::identity()) {
-        n = 1;
-        while (n < size) n <<= 1;
-        t.resize(n << 1, v);
+    int size;
+    vector<T> data;
+    void build() {
+        for (int i = size - 1; i > 0; --i)
+            data[i] = Monoid::op(data[i << 1], data[i << 1 | 1]);
+    }
+public:
+    SegmentTree(int n) {
+        size = 1;
+        while (size < n) size <<= 1;
+        data.assign(size << 1, Monoid::identity());
     }
     template <class InputIt>
-    SegmentTree(InputIt first, InputIt last) : n(distance(first, last)), t(n << 1, Monoid::identity()) {
-        copy(first, last, begin(t) + n);
-        for (size_t i = n - 1; i > 0; i--) prop_to(i);
+    SegmentTree(InputIt first, InputIt last) : SegmentTree(std::distance(first, last)){
+        copy(first, last, std::begin(data) + size);
+        build();
     }
-    static T modify_update(const T& a, const T& b) { return b; }
-    static T modify_add(const T& a, const T& b) { return a + b; }
-    void update(size_t i, const T& v, const function<T(T, T)>& func = modify_update) {
-        i += n;
-        t[i] = func(t[i], v);
-        while (i >>= 1) prop_to(i);
+
+    // 0-indexed
+    void update(int p, const T &value) {
+        for (data[p += size] = value; p >>= 1; ) data[p] = Monoid::op(data[p << 1], data[p << 1 | 1]);
     }
-    T query(size_t l, size_t r) {
-        T res = Monoid::identity();
-        for (l += n, r += n; l < r; l >>= 1, r >>= 1) {
-            if (l & 1) res = Monoid::op(res, t[l++]);
-            if (r & 1) res = Monoid::op(res, t[--r]);
+    // [l, r)  0-indexed
+    T query(int l, int r) {
+        T resl = Monoid::identity(), resr = Monoid::identity();
+        for (l += size, r += size; l < r; l >>= 1, r >>= 1) {
+            if (l & 1) resl = Monoid::op(resl, data[l++]);
+            if (r & 1) resr = Monoid::op(data[--r], resr);
         }
-        return res;
+        return Monoid::op(resl, resr);
     }
-    T get(size_t i) { return t[i + n]; }
+    // 0-indexed
+    T get(int p) {
+        return data[p + size];
+    }
 };
 
 struct RMQ {
