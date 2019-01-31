@@ -11,8 +11,8 @@ verify: https://beta.atcoder.jp/contests/dwacon2018-final-open/submissions/20714
 <*CODE>*/
 // 1-indexed
 struct BIT_RMQ {
-    vector<int> data;
     int size;
+    vector<int> data;
     BIT_RMQ(int n): size(n), data(n, ${2:0}) {}
     void update(int i, int x) {
         while (i <= size) {

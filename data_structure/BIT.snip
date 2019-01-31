@@ -10,8 +10,8 @@ verify: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=2702662#1
 <*CODE> */
 // 1-indexed
 struct BIT {
-    vector<int> data;
     int size;
+    vector<int> data;
     BIT(int n): size(n + 1), data(n + 1, 0) {}
     void add(int i, int x) {
         while (i < size) {
