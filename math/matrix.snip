@@ -1,0 +1,252 @@
+/*
+<NAME> 行列演算
+<TRIGGER> Matrix
+<TAG> math
+<*NOTE>
+<*CODE> */
+namespace MyMat {
+
+template <typename Scalar>
+class Mat {
+    using mat_t = std::vector<std::vector<Scalar>>;
+public:
+    size_t rows;
+    size_t cols;
+
+    mat_t data;
+    Mat() {}
+    Mat(size_t rows, size_t cols) : rows(rows), cols(cols), data(rows, std::vector<Scalar>(cols)) {}
+    Mat(mat_t raw) : rows(raw.size()), cols(raw[0].size()), data(raw) {}
+    Mat(std::initializer_list<std::vector<Scalar>> raw) : rows(raw.size()), cols(begin(raw)->size()), data(raw) {}
+    virtual ~Mat() {}
+
+    // 列を返す
+    std::vector<Scalar>& operator[](size_t row) { 
+        assert(0 <= row && row < rows);
+        return this->data[row];
+    }
+    const std::vector<Scalar>& operator[](size_t row) const { 
+        assert(0 <= row && row < rows);
+        return this->data[row];
+    }
+
+    Mat<Scalar> operator-() const {
+        Mat ret(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                ret.data[i][j] = -this->data[i][j];
+            }
+        }
+        return ret;
+    }
+
+    Mat<double> operator~() const { return this->Inverse(); }
+    
+    static Mat<Scalar> Identity(size_t n) {
+        Mat<Scalar> ret(n, n);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                ret.data[i][j] = (i == j ? 1 : 0);
+            }
+        }
+        return ret;
+    }
+
+    void Print() const {
+        using namespace std;
+        size_t max_len = 0;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                stringstream ss;
+                ss << data[i][j];
+                max_len = max(max_len, ss.str().size());
+            }
+        }
+
+        for (int i = 0; i < rows; i++) {
+            cout << (i == 0 ? "[" : " ") << "[";
+            for (int j = 0; j < cols; j++) {
+                stringstream ss;
+                ss << data[i][j];
+                cout << string(max_len + 1 - ss.str().size(), ' ') + ss.str();
+                if (j != cols - 1) cout << ",";
+            }
+            cout << "]" << (i != rows - 1 ? "," : "]") << endl;
+        }
+    }
+
+    Mat<Scalar> Map(std::function<Scalar(Scalar)> func) const {
+        Mat<Scalar> ret(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                ret[i][j] = func(data[i][j]);
+            }
+        }
+        return ret;
+    }
+
+    Scalar Accumulate(std::function<Scalar(Scalar, Scalar)> op, Scalar val) const {
+        assert(rows > 0 && cols > 0);
+        Scalar ret = val;
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                ret = op(ret, data[i][j]);
+            }
+        }
+        return ret;
+    }
+
+    Scalar Max() const {
+        assert(rows > 0 && cols > 0);
+        return this->Accumulate([](Scalar a, Scalar b) { return std::max(a, b); }, data[0][0]);
+    }
+    Scalar Min() const {
+        assert(rows > 0 && cols > 0);
+        return this->Accumulate([](Scalar a, Scalar b) { return std::min(a, b); }, data[0][0]);
+    }
+    
+    Scalar Sum() const {
+        assert(rows > 0 && cols > 0);
+        return this->Accumulate([](Scalar a, Scalar b) { return a + b; }, 0);
+    }
+    
+    // ------------------------------------------------
+    
+    // 比較演算子
+    Mat<Scalar> operator>(const Scalar& r) const { return this->Map([&r](Scalar x) { return x > r ? 1 : 0; }); }
+    Mat<Scalar> operator>=(const Scalar& r) const { return this->Map([&r](Scalar x) { return x >= r ? 1 : 0; }); }
+    Mat<Scalar> operator<(const Scalar& r) const { return this->Map([&r](Scalar x) { return x < r ? 1 : 0; }); }
+    Mat<Scalar> operator<=(const Scalar& r) const { return this->Map([&r](Scalar x) { return x <= r ? 1 : 0; }); }
+    Mat<Scalar> operator==(const Scalar& r) const { return this->Map([&r](Scalar x) { return x == r ? 1 : 0; }); }
+    Mat<Scalar> operator!=(const Scalar& r) const { return this->Map([&r](Scalar x) { return x != r ? 1 : 0; }); }
+
+    // ------------------------------------------------
+
+    void Add(const Mat<Scalar>& r) {
+        assert(this->rows == r.rows && this->cols == r.cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                this->data[i][j] += r.data[i][j];
+            }
+        }
+    }
+    void Add(const Scalar& r) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                this->data[i][j] += r;
+            }
+        }
+    }
+    template <typename U>
+    Mat<Scalar> operator+(const U& r) const {
+        Mat<Scalar> ret = *this;
+        ret.Add(r);
+        return ret;
+    }
+
+
+    void Subtract(const Mat<Scalar>& r) {
+        assert(this->rows == r.rows && this->cols == r.cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                this->data[i][j] -= r.data[i][j];
+            }
+        }
+    }
+    void Subtract(const Scalar& r) {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                this->data[i][j] -= r;
+            }
+        }
+    }
+    template <typename U>
+    Mat<Scalar> operator-(const U& r) const {
+        Mat<Scalar> ret = *this;
+        ret.Subtract(r);
+        return ret;
+    }
+
+
+    // TODO: シュトラッセンのアルゴリズム
+    // O(N^3)
+    static Mat<Scalar> Multiply(const Mat<Scalar>& l, const Mat<Scalar>& r) {
+        assert(l.cols == r.rows);
+        Mat ret(l.rows, r.cols);
+        for (int i = 0; i < ret.rows; i++) {
+            for (int j = 0; j < ret.cols; j++) {
+                Scalar tmp = l.data[i][0] * r.data[0][j];
+                for (int k = 1; k < l.cols; k++) {
+                    tmp += l.data[i][k] * r.data[k][j];
+                }
+                ret[i][j] = tmp;
+            }
+        }
+        return ret;
+    }
+    Mat<Scalar> operator*(const Mat<Scalar>& r) {
+        return Multiply(*this, r);
+    }
+    Mat<Scalar> operator*(const Scalar& r) {
+        return this->Map([&r](const Scalar& x) { return x * r; });
+    }
+
+
+    Mat<Scalar> operator/(const Scalar& r) {
+        return this->Map([&r](const Scalar& x) { return x / r; });
+    }
+
+
+    // O(N^3)
+    Mat<double> Inverse() const {
+        assert(this->rows == this->cols);
+
+        int n = this->rows;
+
+        std::vector<std::vector<double>> cloned(n);
+        for (int i = 0; i < n; i++)
+            cloned[i] = std::vector<double>(std::begin(this->data[i]), std::end(this->data[i]));
+        Mat<double> M(cloned);
+
+        auto ret = Mat<double>::Identity(n);
+
+        for (int i = 0; i < n; i++) {
+            double buf = 1.0 / (M.data[i][i] == 0 ? 1e-8 : M.data[i][i]);
+            for (int j = 0; j < n; j++) {
+                M.data[i][j] *= buf;
+                ret.data[i][j] *= buf;
+            }
+            for (int j = 0; j < n; j++) {
+                if (i == j) continue;
+                buf = M.data[j][i];
+                for (int k = 0; k < n; k++) {
+                    M.data[j][k] -= M.data[i][k] * buf;
+                    ret.data[j][k] -= ret.data[i][k] * buf;
+                }
+            }
+        }
+        return ret;
+    }
+
+    Mat<Scalar> Transpose() const {
+        Mat<Scalar> ret(cols, rows);
+        for (int i = 0; i < cols; i++) {
+            for (int j = 0; j < rows; j++) {
+                ret.data[i][j] = this->data[j][i];
+            }
+        }
+        return ret;
+    }
+};
+
+template <typename T>
+Mat<T> arange(T l, T r, T dx) {
+    int n = (r - l) / (double)dx;
+    Mat<T> ret(1, n);
+    for (int i = 0; i < n; i++) {
+        ret[0][i] = l + i * dx;
+    }
+    return ret;
+}
+
+} /* MyMat */
