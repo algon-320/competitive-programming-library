@@ -1,0 +1,62 @@
+
+/*
+<NAME> サイコロ
+<TRIGGER> Dice
+<TAG> data-structure
+<*NOTE>
+
+正六面体の回転をシミュレーションする
+
+<*CODE> */
+template <class T>
+struct Dice {
+    enum FACE {
+        NORTH,
+        WEST,
+        TOP,
+        EAST,
+        BOTTOM,
+        SOUTH
+    };
+    
+    T face[6];
+    
+    Dice(T top, T bottom, T north, T south, T west, T east) {
+        face[TOP] = top;
+        face[BOTTOM] = bottom;
+        face[NORTH] = north;
+        face[SOUTH] = south;
+        face[WEST] = west;
+        face[EAST] = east;
+    }
+    Dice() {}
+    
+    void rotate(int dir) {
+        switch (dir) {
+        case 0:
+            {T tmp = face[2]; face[2] = face[5]; face[5] = face[4]; face[4] = face[0]; face[0] = tmp;}
+            break;
+        case 1:
+            {T tmp = face[2]; face[2] = face[1]; face[1] = face[4]; face[4] = face[3]; face[3] = tmp;}
+            break;
+        case 2:
+            {T tmp = face[2]; face[2] = face[0]; face[0] = face[4]; face[4] = face[5]; face[5] = tmp;}
+            break;
+        case 3:
+            {T tmp = face[2]; face[2] = face[3]; face[3] = face[4]; face[4] = face[1]; face[1] = tmp;}
+            break;
+        case 4: // unimplemented
+        case 5:
+            assert(false);
+            break;
+        }
+    }
+
+    T get(FACE f) {
+        return face[f];
+    }
+    
+    bool operator<(const Dice &r) const {
+        return face[TOP] == r.face[TOP] ? (face[SOUTH] < r.face[SOUTH]) : (face[TOP] < r.face[TOP]);
+    }
+};
