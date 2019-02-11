@@ -22,8 +22,26 @@ struct LazySegmentTree {
     LazySegmentTree(int n)
     : size(calc_size(n)),
       data(size * 2, T::query_identity()), lazy(size * 2, T::prop_identity()), width(size * 2, 1) {
-        for (int i = size - 2; i >= 0; i--) {
+        for (int i = size - 2; i >= 0; --i) {
             width[i] = width[i * 2 + 1] + width[i * 2 + 2];
+        }
+    }
+    template <class Itr>
+    LazySegmentTree(Itr l, Itr r) : size(calc_size(distance(l, r))),
+     data(size * 2, T::query_identity()), lazy(size * 2, T::prop_identity()), width(size * 2) {
+        auto itr = l;
+        for (int i = size - 1; i < size * 2 - 1; ++i) {
+            if (itr != r) {
+                data[i] = *itr;
+                itr++;
+            } else {
+                data[i] = T::query_identity();
+            }
+            width[i] = 1;
+        }
+        for (int i = size - 2; i >= 0; --i) {
+            width[i] = width[i * 2 + 1] + width[i * 2 + 2];
+            data[i] = T::merge(data[i * 2 + 1], data[i * 2 + 2]);
         }
     }
 
@@ -36,7 +54,7 @@ struct LazySegmentTree {
         }
         lazy[p] = T::prop_identity();
     }
-    void update(int wishL, int wishR, int x, int watchL = 0, int watchR = -1, int k = 0) {
+    void update(int wishL, int wishR, elem_t x, int watchL = 0, int watchR = -1, int k = 0) {
         if (watchR == -1) watchR = size;
         if (wishR <= watchL || watchR <= wishL) {
             lazy_propagate(k);
