@@ -1,56 +1,78 @@
 /*
 <NAME> 行列累乗
-<TRIGGER>
+<TRIGGER> Matrix
 <TAG> math
 <*NOTE>
 半環ならば行列累乗可能
 
 <*CODE> */
-template<typename T>
-void resize_matrix(vector<vector<T>> &A, int h, int w, T fill) {
-    A.resize(h);
-    for (int i = 0; i < h; i++) {
-        A[i].resize(w, fill);
-    }
-}
-template<typename T>
-vector<vector<T>> multiple_matrix(vector<vector<T>> &A, vector<vector<T>> &B,
-  function<T(T, T)> add = [](T a, T b){return a + b;},
-  function<T(T, T)> mul = [](T a, T b){return a * b;},
-  T zero = 0) {
-    int m = A.size();
-    int n = A[0].size();
-    assert(n == B.size());
-    int l = B[0].size();
-    vector<vector<T>> res;
-    resize_matrix(res, m, l, zero);
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < l; j++) {
-            T tmp = zero;
-            for (int k = 0; k < n; k++) {
-                T p = mul(A[i][k], B[k][j]);
-                tmp = add(tmp, p);
-            }
-            res[i][j] = tmp;
-        }
-    }
-    return res;
-}
-template <typename T>
-vector<vector<T>> pow_matrix(vector<vector<T>> A, int k,
-  function<T(T, T)> add = [](T a, T b){return a + b;},
-  function<T(T, T)> mul = [](T a, T b){return a * b;},
-  T e = 1, T zero = 0) {
-    int n = A.size();
-    assert(n == A[0].size());
+template <class SR>
+struct Matrix {
+    using T = typename SR::T;
+    vector<vector<T>> data;
 
-    vector<vector<T>> res;
-    resize_matrix(res, n, n, zero);
-    for (int i = 0; i < n; i++) res[i][i] = e;
-    while (k > 0) {
-        if (k & 1) res = multiple_matrix(res, A, add, mul, zero);
-        A = multiple_matrix(A, A, add, mul, zero);
-        k >>= 1;
+    Matrix() : Matrix(1, 1, SR::zero()) {}
+    Matrix(vector<vector<T>> &&A) : data(A) {}
+    Matrix(int r, int c, T fill) : data(r, vector<T>(c, fill)) {}
+
+    int rows() const { return data.size(); }
+    int cols() const { return data[0].size(); }
+
+    static Matrix<SR> multiple(const Matrix<SR> &A, const Matrix<SR> &B) {
+        assert(A.cols() == B.rows());
+        Matrix<SR> ret(A.rows(), B.cols(), SR::zero());
+        for (int i = 0; i < A.rows(); ++i) {
+            for (int j = 0; j < B.cols(); ++j) {
+                T tmp = SR::zero();
+                for (int k = 0; k < A.cols(); ++k) {
+                    T p = SR::mul(A.data[i][k], B.data[k][j]);
+                    tmp = SR::add(tmp, p);
+                }
+                ret.data[i][j] = tmp;
+            }
+        }
+        return ret;
     }
-    return res;
-}
+
+    static Matrix<SR> pow(Matrix<SR> A, int k) {
+        assert(A.rows() == A.cols());
+        int n = A.rows();
+        Matrix<SR> ret(n, n, SR::zero());
+        for (int i = 0; i < n; ++i) ret.data[i][i] = SR::identity();
+        while (k > 0) {
+            if (k & 1) ret = Matrix<SR>::multiple(ret, A);
+            A = Matrix<SR>::multiple(A, A);
+            k >>= 1;
+        }
+        return ret;
+    }
+
+    Matrix<SR> operator*(const Matrix<SR> &r) {
+        return Matrix<SR>::multiple(*this, r);
+    }
+    Matrix<SR>& operator*=(const Matrix<SR> &r) {
+        return *this = *this * r;
+    }
+    Matrix<SR> operator^(int k) {
+        return Matrix<SR>::pow(*this, k);
+    }
+    Matrix<SR>& operator^=(int k) {
+        return *this = *this ^ k;
+    }
+};
+
+struct SemiRing {
+    using T = int;
+    static T add(const T &a, const T &b) {
+        return (a + b);
+    }
+    static T mul(const T &a, const T &b) {
+        return (a * b);
+    }
+    static T zero() {
+        return 0;
+    }
+    static T identity() {
+        return 1;
+    }
+};
