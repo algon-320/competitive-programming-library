@@ -13,6 +13,7 @@ public:
     const ModInt operator-(const ModInt &r) const { return ModInt(this->v + mod - r.v); }
     const ModInt operator*(const ModInt &r) const { return ModInt(this->v * r.v); }
     const ModInt operator/(const ModInt &r) const { return (*this * (~r)); }
+    const ModInt operator^(int k) const { return ModInt(bpow(this->v, k)); }
     const ModInt operator~() const { return ModInt(bpow(this->v, mod-2)); }
     bool operator==(const ModInt &r) const { return this->v == r.v; }
     bool operator!=(const ModInt &r) const { return this->v != r.v; }
