@@ -16,7 +16,7 @@ struct Factorial {
             fact_inv[i] = ~fact[i];
         }
     }
-    Mint cobmination(int N, int R) {
+    Mint combination(int N, int R) {
         if (N < R) return 0;
         return fact[N] * fact_inv[N - R] * fact_inv[R];
     }
