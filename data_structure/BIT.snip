@@ -37,7 +37,7 @@ struct BIT {
         if (w <= 0) return 0;
         int x = 0;
         for (int k = pow2_less; k > 0; k >>= 1) {
-            if (x + k <= size && data[x + k] < w) {
+            if (x + k < size && data[x + k] < w) {
                 w -= data[x + k];
                 x += k;
             }
