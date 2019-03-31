@@ -11,8 +11,13 @@ verify: http://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=2702662#1
 // 1-indexed
 struct BIT {
     int size;
+    int pow2_less;
     vector<int> data;
-    BIT(int n): size(n + 1), data(n + 1, 0) {}
+    BIT(int n): size(n + 1), data(n + 1, 0) {
+        pow2_less = 1;
+        while ((pow2_less << 1) <= size)
+            pow2_less <<= 1;
+    }
     void add(int i, int x) {
         while (i < size) {
             data[i] += x;
@@ -26,5 +31,17 @@ struct BIT {
             i -= i & -i;
         }
         return ret;
+    }
+    // sum(x) >= w となる最小のxを返す
+    int lower_bound(int w) {
+        if (w <= 0) return 0;
+        int x = 0;
+        for (int k = pow2_less; k > 0; k >>= 1) {
+            if (x + k <= size && data[x + k] < w) {
+                w -= data[x + k];
+                x += k;
+            }
+        }
+        return x + 1;
     }
 };
