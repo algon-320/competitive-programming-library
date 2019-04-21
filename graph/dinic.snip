@@ -20,6 +20,10 @@ struct Dinic {
         G[from].push_back((edge){to, cap, (int)G[to].size()});
         G[to].push_back((edge){from, 0, (int)(G[from].size() - 1)});
     }
+    void add_edge_undirected(int a, int b, int cap) {
+        G[a].push_back((edge){b, cap, (int)G[b].size()});
+        G[b].push_back((edge){a, cap, (int)(G[a].size() - 1)});
+    }
 
     void bfs(int s) {
         level.assign(V, -1);
