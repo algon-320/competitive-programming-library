@@ -6,84 +6,73 @@
 <*CODE> */
 // ------------------ RMQ
 vector<int> id(n);
-    vector<int> depth(n);
-    vector<int> vs(n * 2);
-    SegmentTree<pii> rmq(n * 2, [](pii a, pii b){return min(a, b);}, {INF, -1});
-    int k = 0;
-    function<void(int, int, int)> dfs = [&](int v, int p, int d) {
-        id[v] = k;
-        vs[k] = v;
-        depth[v] = d;
-        rmq.update(k, {d, k}); k++;
-        for (int i = 0; i < g[v].size(); i++) {
-            if (g[v][i] != p) {
-                dfs(g[v][i], v, d+1);
-                vs[k] = v;
-                rmq.update(k, {d, k});
-                k++;
+vector<int> depth(n);
+vector<int> vs(n * 2);
+SegmentTree<pii> rmq(n * 2, [](pii a, pii b){return min(a, b);}, {INF, -1});
+int k = 0;
+function<void(int, int, int)> dfs = [&](int v, int p, int d) {
+    id[v] = k;
+    vs[k] = v;
+    depth[v] = d;
+    rmq.update(k, {d, k}); k++;
+    for (int i = 0; i < g[v].size(); i++) {
+        if (g[v][i] != p) {
+            dfs(g[v][i], v, d+1);
+            vs[k] = v;
+            rmq.update(k, {d, k});
+            k++;
+        }
+    }
+};
+dfs(0, -1, 0);
+auto lca = [&](int u, int v) {
+    return vs[rmq.query(min(id[u], id[v]), max(id[u], id[v]) + 1).second];
+};
+
+//------------- tarjan's offline LCA
+// requires UnionFind
+struct LCA {
+    using Query = pii;
+    
+    vector<vector<int>> g;
+    vector<int> color;
+    vector<int> ancestor;
+    vector<vector<pair<int, Query>>> query_set;
+    UnionFind uf;
+    vector<int> res;
+
+    LCA(const vector<vector<int>> &g, vector<Query> &query) : g(g), color(sz(g)), ancestor(sz(g)), query_set(sz(g)), uf(sz(g)), res(sz(query)) {
+        int qs = sz(query);
+        for (int i = 0; i < qs; ++i) {
+            query_set[query[i].first ].emplace_back(i, query[i]);
+            query_set[query[i].second].emplace_back(i, query[i]);
+        }
+    }
+
+    void visit(int v, int prev) {
+        ancestor[uf.root(v)] = v;
+        for (auto &w : g[v]) {
+            if (w == prev) {
+                continue;
             }
+            visit(w, v);
+            uf.unite(v, w);
+            ancestor[uf.root(v)] = v;
         }
-    };
-    dfs(0, -1, 0);
-    auto lca = [&](int u, int v) {
-        return vs[rmq.query(min(id[u], id[v]), max(id[u], id[v]) + 1).second];
-    };
-
-//------------- ダブリング
-const int MAX_LOG_N = 17; // N = 10^5
-int N, M;
-vector<vector<int>> t;
-vector<vector<int>> parent;
-vector<int> depth;
-void dfs(int u, int d, int from) {
-    depth[u] = d;
-    parent[u][0] = from;
-    for (int v : t[u]) {
-        if (v != from) {
-            dfs(v, d+1, u);
-        }
-    }
-}
-int lca(int x, int y) {
-    if (depth[x] > depth[y]) swap(x,y);
-    for (int k = 0; k < MAX_LOG_N; k++) {
-        if ((depth[y] - depth[x]) >> k & 1) {
-            y = parent[y][k];
-        }
-    }
-    if (x == y) return x;
-    for (int k = MAX_LOG_N - 1; k >= 0; k--) {
-        if (parent[x][k] != parent[y][k]) {
-            x = parent[x][k];
-            y = parent[y][k];
-        }
-    }
-    return parent[x][0];
-}
-signed main() {
-    cin >> N >> M;
-    t.resize(N);
-    t = vector<vector<int>>(N);
-    parent = vector<vector<int>>(N, vi(MAX_LOG_N + 1, 0));
-    depth = vector<int>(N);
-
-    for (int i = 0; i < M; i++) {
-        int x, y;
-        cin >> x >> y;
-        x--, y--;
-        t[x].push_back(y);
-        t[y].push_back(x);
-    }
-
-    // init
-    dfs(0, 0, -1);
-    for (int k = 0; k < MAX_LOG_N - 1; k++) {
-        for (int v = 0; v < N; v++) {
-            if (parent[v][k] < 0) parent[v][k+1] = -1;
-            else parent[v][k + 1] = parent[parent[v][k]][k];
+        color[v] = 1;
+        for (auto &p : query_set[v]) {
+            Query q = p.second;
+            int w = (q.second == v ? q.first
+                    : (q.first == v ? q.second : -1));
+            if (w == -1 || !color[w]) {
+                continue;
+            }
+            res[p.first] = ancestor[uf.root(w)];
         }
     }
 
-    /////// use LCA ///////
-    return 0;
-}
+    vector<int> solve(int root) {
+        visit(root, -1);
+        return res;
+    }
+};
