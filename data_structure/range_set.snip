@@ -1,0 +1,156 @@
+/*
+<NAME> RangeSet
+<TRIGGER>
+<TAG> data-structure
+<*NOTE>
+- 区間[L,R)の集合を管理する
+<*CODE> */
+struct Range {
+  // [l, r)
+  int l;
+  int r;
+
+  Range() : l(-1), r(-1) {}
+  Range(int l, int r) : l(l), r(r) { fit(); }
+  void fit() {
+    if (r < l) r = l;
+  }
+  int len() const { return r - l; }
+  std::pair<int, int> as_pair() const { return std::make_pair(l, r); }
+
+#define DEF_BIN_OPS(op) \
+  bool operator op(const Range &o) const { return as_pair() op o.as_pair(); }
+  DEF_BIN_OPS(<)
+  DEF_BIN_OPS(>)
+  DEF_BIN_OPS(==)
+  DEF_BIN_OPS(!=)
+  DEF_BIN_OPS(<=)
+  DEF_BIN_OPS(>=)
+#undef DEF_BIN_OPS
+
+  bool merge(const Range &o) {
+    if (r < o.l || o.r < l) return false;
+    l = std::min(l, o.l);
+    r = std::max(r, o.r);
+    fit();
+    return true;
+  }
+  bool intersect(const Range &o) {
+    if (r < o.l || o.r < l) return false;
+    l = std::max(l, o.l);
+    r = std::min(r, o.r);
+    fit();
+    return true;
+  }
+
+  std::string fmt() const {
+    std::stringstream ss;
+    ss << "[" << l << ", " << r << ")";
+    return ss.str();
+  }
+};
+
+struct RangeSet {
+  std::map<int, Range> s;
+  RangeSet() {}
+  RangeSet(const std::vector<Range> &x) {
+    for (auto &r : x) insert(r);
+  }
+  int length_sum() const {
+    int ret = 0;
+    for (const auto &r : s) {
+      ret += r.second.len();
+    }
+    return ret;
+  }
+  bool contains(int p) const {
+    auto itr = this->s.upper_bound(p);
+    return (itr != this->s.end() && itr->second.l <= p);
+  }
+  void insert(const Range &range) {
+    auto itr1 = this->s.lower_bound(range.l);
+    auto itr2 = this->s.upper_bound(range.r);
+    if (itr2 != this->s.end()) itr2++;
+    Range tmp = range;
+    for (auto itr = itr1; itr != itr2;) {
+      bool merged = tmp.merge(itr->second);
+      if (!merged) break;
+      itr = this->s.erase(itr);
+    }
+    if (tmp.len()) this->s[tmp.r] = tmp;
+  }
+  void cut(const Range &range) {
+    auto itr1 = this->s.upper_bound(range.l);
+    auto itr2 = this->s.lower_bound(range.r);
+    if (itr2 != this->s.end()) itr2++;
+    Range r1, r2;
+    for (auto itr = itr1; itr != itr2;) {
+      Range tmp = itr->second;
+      if (!tmp.intersect(range)) break;
+      tmp = itr->second;
+      Range split1(tmp.l, range.l);
+      Range split2(range.r, tmp.r);
+      if (split1.len()) r1 = split1;
+      if (split2.len()) r2 = split2;
+      itr = this->s.erase(itr);
+    }
+    if (r1.len()) this->insert(r1);
+    if (r2.len()) this->insert(r2);
+  }
+  RangeSet operator&(const RangeSet &o) const {
+    RangeSet ret;
+    for (auto x : o.s) {
+      const Range &range = x.second;
+      auto itr1 = this->s.upper_bound(range.l);
+      auto itr2 = this->s.lower_bound(range.r);
+      if (itr2 != this->s.end()) itr2++;
+      for (auto itr = itr1; itr != itr2; itr++) {
+        Range tmp = itr->second;
+        if (tmp.intersect(range)) {
+          ret.s[tmp.r] = tmp;
+        }
+      }
+    }
+    return ret;
+  }
+  RangeSet operator+(const RangeSet &o) const {
+    RangeSet ret = *this;
+    for (auto x : o.s) {
+      ret.insert(x.second);
+    }
+    return ret;
+  }
+  RangeSet operator-(const RangeSet &o) const {
+    RangeSet ret = *this;
+    for (auto x : o.s) {
+      ret.cut(x.second);
+    }
+    return ret;
+  }
+  bool operator==(const RangeSet &o) const { return s == o.s; }
+  bool operator!=(const RangeSet &o) const { return s != o.s; }
+
+#define DEF_OPS(op) \
+  RangeSet &operator op##=(const RangeSet &o) { return *this = (*this op o); }
+  DEF_OPS(&)
+  DEF_OPS(+)
+  DEF_OPS(-)
+#undef DEF_OPS
+
+  std::string fmt() const {
+    std::stringstream ss;
+    ss << "{ ";
+    for (auto x : s) {
+      ss << x.second.fmt() << ", ";
+    }
+    ss << "}";
+    return ss.str();
+  }
+
+  void check() {
+    for (auto &x : s) {
+      assert(x.second.len() > 0);
+      assert(x.first == x.second.r);
+    }
+  }
+};
