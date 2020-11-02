@@ -1,0 +1,101 @@
+/*
+<NAME> Aho-Corasick
+<TRIGGER>
+<TAG> String Matching, string
+<*NOTE>
+<*CODE> */
+template <char OFFSET>
+struct AhoCorasick {
+  struct Node {
+    map<int, int> nxt, go;
+    int p, pch;
+    int suf, ssuf;
+    int term;
+    Node() {
+      nxt.clear();
+      go.clear();
+      suf = ssuf = -1;
+      term = -1;
+      p = -1, pch = -1;
+    }
+  };
+  vector<Node> nodes;
+  int word_cnt = 0;
+  size_t size() const { return nodes.size(); }
+
+  AhoCorasick() : nodes(1) {}
+  template <class Iter>
+  AhoCorasick(Iter first, Iter last) : nodes(1) {
+    for (auto itr = first; itr != last; itr++) {
+      enter(*itr);
+    }
+  }
+
+  int enter(const string &s) {
+    int v = 0;
+    for (int c : s) {
+      c -= OFFSET;
+      if (!nodes[v].nxt.count(c)) {
+        Node nd;
+        nd.p = v;
+        nd.pch = c;
+        nodes.push_back(nd);
+        nodes[v].nxt[c] = int(nodes.size()) - 1;
+      }
+      v = nodes[v].nxt[c];
+    }
+    if (nodes[v].term == -1) nodes[v].term = word_cnt++;
+    return v;
+  }
+
+  template <class Fn>
+  void each_match(const string &text, Fn f) {
+    int v = 0;
+    for (int i = 0; i < text.size(); i++) {
+      int c = text[i] - OFFSET;
+      v = go(v, c);
+      int u = v;
+      while (u != 0) {
+        int idx = nodes[u].term;
+        if (idx != -1) f(i, u, idx);
+        u = ssuf(u);
+      }
+    }
+  }
+
+  int go(int v, int c) {
+    if (nodes[v].go.count(c)) return nodes[v].go[c];
+    if (nodes[v].nxt.count(c)) return nodes[v].go[c] = nodes[v].nxt[c];
+    if (v == 0) return nodes[v].go[c] = 0;
+    return nodes[v].go[c] = go(suf(v), c);
+  }
+
+  int suf(int v) {
+    if (nodes[v].suf != -1) return nodes[v].suf;
+    if (v == 0 || nodes[v].p == 0) return nodes[v].suf = 0;
+    return nodes[v].suf = go(suf(nodes[v].p), nodes[v].pch);
+  }
+
+  int ssuf(int v) {
+    if (nodes[v].ssuf != -1) return nodes[v].ssuf;
+    if (v == 0 || nodes[v].p == 0) return nodes[v].ssuf = 0;
+    int s = suf(v);
+    if (nodes[s].term != -1) return nodes[v].ssuf = s;
+    return nodes[v].ssuf = ssuf(s);
+  }
+};
+
+// int main() {
+//   vector<string> s = {"he", "she", "his", "hers"};
+//   AhoCorasick<'a'> ahocora(begin(s), end(s));
+//
+//   vector<pair<int, string>> ans;
+//   ahocora.each_match("ushers", [&](int p, int nd, int i) -> void {
+//     ans.emplace_back(p - s[i].size() + 1, s[i]);
+//   });
+//
+//   cout << ahocora.size() << endl;
+//   for (auto p : ans) {
+//     cout << p.first << ": " << p.second << endl;
+//   }
+// }
