@@ -1,0 +1,78 @@
+/*
+<NAME> binsearch
+<TRIGGER>
+<TAG> utility, etc
+<*NOTE>
+<*CODE> */
+namespace binsearch {
+template <class C, class T>
+typename C::const_iterator greater_than(const C &c, const T &v) {
+  return c.upper_bound(v);
+}
+template <class T>
+typename std::vector<T>::const_iterator greater_than(const std::vector<T> &c,
+                                                     const T &v) {
+  return std::upper_bound(c.cbegin(), c.cend(), v);
+}
+
+template <class C, class T>
+typename C::const_iterator greater_than_or_equal(const C &c, const T &v) {
+  return c.lower_bound(v);
+}
+template <class T>
+typename std::vector<T>::const_iterator greater_than_or_equal(
+    const std::vector<T> &c, const T &v) {
+  return std::lower_bound(c.cbegin(), c.cend(), v);
+}
+
+template <class C, class T>
+typename C::const_iterator less_than(const C &c, const T &v) {
+  auto itr = c.lower_bound(v);
+  return (itr == c.cbegin() ? c.cend() : std::prev(itr));
+}
+template <class T>
+typename std::vector<T>::const_iterator less_than(const std::vector<T> &c,
+                                                  const T &v) {
+  auto itr = std::lower_bound(std::cbegin(c), std::cend(c), v);
+  return (itr == c.cbegin() ? c.cend() : std::prev(itr));
+}
+
+template <class C, class T>
+typename C::const_iterator less_than_or_equal(const C &c, const T &v) {
+  auto itr = c.upper_bound(v);
+  return (itr == c.cbegin() ? c.cend() : std::prev(itr));
+}
+template <class T>
+typename std::vector<T>::const_iterator less_than_or_equal(
+    const std::vector<T> &c, const T &v) {
+  auto itr = std::upper_bound(std::cbegin(c), std::cend(c), v);
+  return (itr == c.cbegin() ? c.cend() : std::prev(itr));
+}
+
+namespace rev {
+template <class C, class T>
+typename C::const_reverse_iterator less_than(const C &c, const T &v) {
+  auto itr = c.lower_bound(v);
+  return (itr == c.cbegin() ? c.crend() : std::make_reverse_iterator(itr));
+}
+template <class T>
+typename std::vector<T>::const_reverse_iterator less_than(
+    const std::vector<T> &c, const T &v) {
+  auto itr = std::lower_bound(std::cbegin(c), std::cend(c), v);
+  return (itr == c.cbegin() ? c.crend() : std::make_reverse_iterator(itr));
+}
+
+template <class C, class T>
+typename C::const_reverse_iterator less_than_or_equal(const C &c, const T &v) {
+  auto itr = c.upper_bound(v);
+  return (itr == c.cbegin() ? c.crend() : std::make_reverse_iterator(itr));
+}
+template <class T>
+typename vector<T>::const_reverse_iterator less_than_or_equal(
+    const vector<T> &c, const T &v) {
+  auto itr = std::upper_bound(std::cbegin(c), std::cend(c), v);
+  return (itr == c.cbegin() ? c.crend() : std::make_reverse_iterator(itr));
+}
+}  // namespace rev
+
+}  // namespace binsearch
