@@ -8,10 +8,10 @@
 source: http://www.prefield.com/algorithm/container/union_find.html
 
 <*CODE> */
-struct union_find {
+struct UnionFind {
     vector<int> data;
     int comp;
-    union_find(int size) : data(size, -1), comp(size) {}
+    UnionFind(int size) : data(size, -1), comp(size) {}
     void unite(int x, int y) {
         x = root(x); y = root(y);
         if(x != y) {
