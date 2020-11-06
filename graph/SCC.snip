@@ -9,6 +9,8 @@
 2. DAGを呼ぶとdagにDAGが構築される。
 3. SCCを呼ぶと(DAGを呼ぶと中で呼ばれる)、compに強連結成分の番号が入る。(同じ番号なら同じ強連結成分に属している)
 
+dagは自己辺を含む点に注意。
+
 <*CODE> */
 struct StronglyConnectedComponent {
     vector<vector<int>> &g;
@@ -40,7 +42,7 @@ struct StronglyConnectedComponent {
             for (auto &x: rg[v]) if(!vis[x]) dfs2(x, k);
         };
         int cnt = 0;
-        for (int i = SZ(vs) - 1; i >= 0; i--) {
+        for (int i = sz(vs) - 1; i >= 0; i--) {
             if (!vis[vs[i]]) dfs2(vs[i], cnt++);
         }
         return cnt;
