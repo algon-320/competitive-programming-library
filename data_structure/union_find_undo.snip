@@ -1,0 +1,43 @@
+/*
+<NAME> 復元機能つきUnion-Find
+<TRIGGER> 
+<TAG> data-structure
+<*NOTE>
+経路圧縮できないため計算量は O(\log N)
+
+<*CODE> */
+struct UndoableUnionFind {
+  vector<int> data;
+  vector<pair<int, int>> history;
+  int comp;
+  UndoableUnionFind(int size) : data(size, -1), comp(size) {}
+  void unite(int x, int y) {
+    x = root(x);
+    y = root(y);
+    history.emplace_back(x, data[x]);
+    history.emplace_back(y, data[y]);
+    if (x != y) {
+      if (data[y] < data[x]) swap(x, y);
+      data[x] += data[y];
+      data[y] = x;
+      comp--;
+    }
+  }
+  bool same(int x, int y) { return root(x) == root(y); }
+  int root(int x) { return data[x] < 0 ? x : root(data[x]); }
+  int size(int x) { return -data[root(x)]; }
+  int components() { return comp; }
+  void undo() {
+    int v[2], d[2];
+    for (int i = 0; i < 2; i++) {
+      tie(v[i], d[i]) = history.back();
+      history.pop_back();
+      data[v[i]] = d[i];
+    }
+    if (v[0] != v[1]) comp++;
+  }
+  void snapshot() { history.clear(); }
+  void rollback() {
+    while (history.size()) undo();
+  }
+};
